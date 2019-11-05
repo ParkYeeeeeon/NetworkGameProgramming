@@ -1,0 +1,5 @@
+﻿  main.cpp
+c:\users\얭\source\repos\넷겜플 팀플\넷겜플 팀플\main.cpp(64): warning C4101: 'hdc' :참조되지 않은 지역 변수입니다.
+c:\users\얭\source\repos\넷겜플 팀플\넷겜플 팀플\main.cpp(63): warning C4101: 'ps' :참조되지 않은 지역 변수입니다.
+c:\users\얭\source\repos\넷겜플 팀플\넷겜플 팀플\main.cpp(64): warning C4101: 'memdc' :참조되지 않은 지역 변수입니다.
+  넷겜플 팀플.vcxproj -> C:\Users\얭\source\repos\넷겜플 팀플\Debug\넷겜플 팀플.exe
