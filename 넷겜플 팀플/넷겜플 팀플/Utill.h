@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <vector>
 #include <iostream>
+#include <cstdlib> // 랜덤함수를 위한 헤더
+#include <ctime>
 
 using namespace std;
 
@@ -10,6 +12,12 @@ using namespace std;
 #define PACKET_ENEMY 1
 #define PACKET_BOSS 2
 #define PACKET_GAMESTATE 3
+
+#define display_start_x 300 // 출력지점
+#define display_end_x 1100
+#define display_start_y 300
+#define display_end_y 900
+
 
 struct Location {
 	int x;

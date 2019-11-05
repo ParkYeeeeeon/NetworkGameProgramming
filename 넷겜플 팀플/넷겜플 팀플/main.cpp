@@ -35,6 +35,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	WndClass.style = CS_HREDRAW | CS_VREDRAW;
 	RegisterClass(&WndClass);
 
+	srand((unsigned int)time(NULL)); // 랜덤 시드값
+
 	hWnd = CreateWindow(
 		lpszClass, // 윈도우 클래스 이름
 		"넷겜플 팀플", // 윈도우 타이틀 이름
