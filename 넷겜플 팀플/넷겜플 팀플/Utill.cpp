@@ -1,5 +1,7 @@
 #include "Utill.h"
 
+
+
 void key_input() {
 	// 키 입력 처리
 }
@@ -7,6 +9,7 @@ void key_input() {
 void draw_ui() {
 	// ui 그리기
 }
+
 
 void draw_map() {
 	// map 그리기

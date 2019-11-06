@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdlib> // 랜덤함수를 위한 헤더
 #include <ctime>
+#include <atlimage.h> // CImage
 
 using namespace std;
 
@@ -17,6 +18,8 @@ using namespace std;
 #define display_end_x 1100
 #define display_start_y 300
 #define display_end_y 900
+
+
 
 
 struct Location {
