@@ -10,7 +10,6 @@ void draw_ui() {
 	// ui 그리기
 }
 
-
 void draw_map() {
 	// map 그리기
 }
