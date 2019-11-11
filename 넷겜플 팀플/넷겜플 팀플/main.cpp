@@ -4,6 +4,7 @@
 #include <math.h>
 #include <mmsystem.h>
 #include "Utill.h"
+#include "Enemy.h"
 #pragma comment(lib,"winmm.lib") 
 
 using namespace std;
@@ -63,10 +64,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
-	HDC hdc, memdc;
+	HDC hdc, mem0dc;
+	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
+	static RECT rt;
 
 	switch (iMessage) {
 	case WM_CREATE:
+		srand((unsigned int)time(NULL));
+
+		GetClientRect(hwnd, &rt);
+		init_Monster_Image();
+		
 		break;
 
 	case WM_CHAR:
@@ -148,7 +156,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 		}
 	case WM_PAINT:
+		hdc = BeginPaint(hwnd, &ps);
+		mem0dc = CreateCompatibleDC(hdc);//2
+		hbmMem = CreateCompatibleBitmap(hdc, rt.right, rt.bottom);//3
+		SelectObject(mem0dc, hbmMem);
+		PatBlt(mem0dc, rt.left, rt.top, rt.right, rt.bottom, BLACKNESS);
+		hbmMemOld = (HBITMAP)SelectObject(mem0dc, hbmMem);//4
 
+		//Monster_Draw(mem0dc, 199, 579, 0, 100);
+		draw_enemy(mem0dc);
+		
+
+		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
+
+		SelectObject(mem0dc, hbmMemOld); //-4
+		DeleteObject(hbmMem); //-3
+		DeleteObject(hbmMemOld); //-3
+		DeleteDC(mem0dc); //-2
+		DeleteDC(hdc); //-2
+		EndPaint(hwnd, &ps);
 		break;
 
 	case WM_DESTROY:
