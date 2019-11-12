@@ -5,6 +5,8 @@
 #include <mmsystem.h>
 #include "Utill.h"
 #include "Enemy.h"
+#include "Player.h"
+#include "GameState.h"
 #pragma comment(lib,"winmm.lib") 
 
 using namespace std;
@@ -15,6 +17,8 @@ using namespace std;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = "ApiBase";
+
+Player PLAYER[2];
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
@@ -86,16 +90,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
+			key_input(VK_UP);
 			break;
 		case VK_DOWN:
+			key_input(VK_DOWN);
 			break;
 		case VK_LEFT:
+			key_input(VK_LEFT);
 			break;
 		case VK_RIGHT:
+			key_input(VK_RIGHT);
 			break;
 		case VK_SPACE:
+			key_input(VK_SPACE);
 			break;
 		case VK_ESCAPE:
+			key_input(VK_ESCAPE);
 			break;
 		case 'Q':
 			PostQuitMessage(0);
@@ -166,6 +176,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_enemy(mem0dc);
 		
+
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 

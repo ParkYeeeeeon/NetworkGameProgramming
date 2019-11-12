@@ -14,5 +14,6 @@ struct Player {
 };
 #pragma pack()
 
+void set_player(Player player[2], Player packet[2]);
 void draw_player(Player& p);
 void draw_playerbullet(Player& p);
