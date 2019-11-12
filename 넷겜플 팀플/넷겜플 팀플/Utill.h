@@ -19,6 +19,8 @@ using namespace std;
 #define display_start_y 300
 #define display_end_y 900
 
+#define MONSTER_COUNT 30
+
 
 struct Location {
 	int x;

@@ -1,0 +1,13 @@
+diff a/넷겜플 팀플/넷겜플 팀플/Player.cpp b/넷겜플 팀플/넷겜플 팀플/Player.cpp	(rejected hunks)
+@@ -1,11 +1,5 @@
+ #include "Player.h"
+ 
+-void set_player(Player player[2], Player packet[2]) {
+-	for (int i = 0; i < 2; ++i) {
+-		player[i] = packet[i];
+-	}
+-}
+-
+ void draw_player(Player& p) {
+ 	// �÷��̾� �׸���
+ }

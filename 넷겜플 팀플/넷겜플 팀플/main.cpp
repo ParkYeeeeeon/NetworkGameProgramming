@@ -69,6 +69,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 {
 	PAINTSTRUCT ps;
 	HDC hdc, mem0dc;
+	HWND cpy_hwnd;
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
 
@@ -76,10 +77,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	case WM_CREATE:
 		srand((unsigned int)time(NULL));
 
+		cpy_hwnd = hwnd;
+
 		GetClientRect(hwnd, &rt);
 		init_Monster_Image();
-		
+		// 몬스터 애니메이션 변경 타이머
+		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
+		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 1초간(100ms) 움직인다
 		break;
+		
+	
 
 	case WM_CHAR:
 		break;
@@ -135,9 +142,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case 1:
+			// 몬스터 애니메이션 변화
+			for (int i = 0; i < MONSTER_COUNT; ++i) {
+				change_enemy_ani(0, i);
+				change_enemy_ani(1, i);
+				change_enemy_ani(2, i);
+			}
 			break;
 
 		case 2:
+			// 몬스터 위치 변화
+			for (int i = 0; i < MONSTER_COUNT; ++i)
+			{
+				change_enemy_location(0, i);
+				change_enemy_location(1, i);
+				change_enemy_location(2, i);
+			}
 			break;
 
 		case 3:
@@ -165,6 +185,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 			break;
 		}
+		InvalidateRgn(hwnd, NULL, FALSE);
+		break;
+
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
 		mem0dc = CreateCompatibleDC(hdc);//2
