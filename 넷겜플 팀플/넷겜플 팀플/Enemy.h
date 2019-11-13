@@ -22,8 +22,10 @@ extern Enemy mon2[MONSTER_COUNT];
 extern Enemy mon3[MONSTER_COUNT];
 
 void init_Monster_Image();
+void init_Monster_Bullet_Image();
 void Monster_Draw(HDC hdc, int x, int y, int Kind, int ani, int hp);
+void Bullet_Draw(HDC hdc, int x, int y, int Kind);
 void draw_enemy(HDC hdc);
-void draw_enemybullet();
+void draw_enemybullet(HDC hdc);
 void change_enemy_ani(int monsterKind, int monster_id);
 void change_enemy_location(int monsterkind, int monster_id);

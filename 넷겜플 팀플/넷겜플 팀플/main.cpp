@@ -83,9 +83,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		GetClientRect(hwnd, &rt);
 		init_Monster_Image();
 		init_ui(ui);
+		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
+
 		// 몬스터 애니메이션 변경 타이머
 		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
-		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 1초간(100ms) 움직인다
+		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
 		break;
 		
 	
@@ -201,7 +203,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_enemy(mem0dc);
 		draw_ui(mem0dc, ui);
-
+		draw_enemybullet(mem0dc);	// 총알을 그린다.
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 

@@ -20,19 +20,48 @@ void init_Monster_Image() {
 		mon3[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
 		mon2[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
 		mon3[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-		
+
 	}
 }
 
 void init_Monster_Bullet_Image()
 {
 	Monster_bullet[0].Load("Image\\Monster\\적총알기본.png");
-	for (int i = 0; i < MONSTER_COUNT; i++) // 몬스터 위치 난수 생성
+	// 몬스터 Bullet 을 넣기 위하여 몬스터 만큼 돌린다.
+	for (int i = 0; i < MONSTER_COUNT; i++)
 	{
-		//mon1[i].bullet
-
+		// Bullet 구조체를 먼저 선언하여 해당 몬스터의 좌표와, 타입을 넣어준다.
+		Bullet bullet;
+		bullet.position.x = mon1[i].position.x;
+		bullet.position.y = mon1[i].position.y;
+		bullet.type = 0;
+		// j 가 도는 만큼 해당 몬스터의 bullet에 추가 된다.
+		for (int j = 0; j < 10; ++j) {
+			mon1[i].bullet.push_back(bullet);
+		}
 	}
 
+}
+
+void draw_enemybullet(HDC hdc) {
+	// 몬스터 Bullet을 그리기 위하여 몬스터 만큼 돌린다.
+	for (int i = 0; i < MONSTER_COUNT; i++)
+	{
+		// mon1의 Vector bullet구조체에 들어있는 만큼 for문을 돌린다.
+		for (auto bullet : mon1[i].bullet) {
+			// 해당 Vector에 들어있는 bullet을 가져와서 위치에 그려준다.
+			// ex) 위에서 10개의 Bullet를 그렸으니, 몬스터가 처음 지정된 위치에 bullet가 10개가 그대로 그려져 있는다.
+			Bullet_Draw(hdc, bullet.position.x, bullet.position.y, bullet.type);
+		}
+
+	}
+}
+
+void Bullet_Draw(HDC hdc, int x, int y, int Kind) {
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	int bulletX = 50, bulletY = 50;
+	Monster_bullet[Kind].Draw(hdc, 0 + (x * 1), 0 + (y * 1), 10, 10, 0, 0, bulletX, bulletY);
 }
 
 void change_enemy_ani(int monsterKind, int monster_id) {
