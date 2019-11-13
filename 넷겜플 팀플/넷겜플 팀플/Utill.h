@@ -6,6 +6,7 @@
 #include <cstdlib> // 랜덤함수를 위한 헤더
 #include <ctime>
 #include <atlimage.h> // CImage
+#include "Player.h"
 
 using namespace std;
 
@@ -22,18 +23,18 @@ using namespace std;
 #define MONSTER_COUNT 30
 
 
-struct Location {
+extern struct Location {
 	int x;
 	int y;
 };	// 좌표
 
-struct Bullet {
+extern struct Bullet {
 	Location position;	// 총알의 위치
 	int type;			// 어떤 객체의 총알인가
 };
 
 
-struct UI {					   // 0 : 플레이어1 , 1: 플레이어2
+extern struct UI {					   // 0 : 플레이어1 , 1: 플레이어2
 	Location hp_position[2];   // hp ui의 위치
 	int hp[2];				   // hp 상태
 	Location bomb_position[2]; // 폭탄 ui 위치
