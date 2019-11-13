@@ -19,6 +19,7 @@ HINSTANCE g_hInst;
 LPCTSTR lpszClass = "ApiBase";
 
 Player PLAYER[2];
+UI ui;
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
@@ -81,6 +82,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		GetClientRect(hwnd, &rt);
 		init_Monster_Image();
+		init_ui(ui);
 		// 몬스터 애니메이션 변경 타이머
 		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
 		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 1초간(100ms) 움직인다
@@ -198,7 +200,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_enemy(mem0dc);
-		
+		draw_ui(mem0dc, ui);
 
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);

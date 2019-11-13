@@ -1,0 +1,7 @@
+*.ipch
+넷겜플 팀플/x64/
+*.idb
+*.pdb
+*.log
+*.tlog
+*.lastbuildstate
