@@ -34,9 +34,10 @@ void init_Monster_Bullet_Image()
 		Bullet bullet;
 		bullet.position.x = mon1[i].position.x;
 		bullet.position.y = mon1[i].position.y;
+		mon1[i].bullet.reserve(25); // 벡터의 메모리크기 미리 할당
 		bullet.type = 0;
 		// j 가 도는 만큼 해당 몬스터의 bullet에 추가 된다.
-		for (int j = 0; j < 10; ++j) {
+		for (int j = 0; j < 1; ++j) {
 			mon1[i].bullet.push_back(bullet);
 		}
 	}
@@ -115,7 +116,7 @@ void change_enemy_location(int monsterKind, int monster_id)
 	{
 	case 0:
 		// mon1
-		mon1[monster_id].position.x = mon1[monster_id].position.x - 1;
+		mon1[monster_id].position.x = mon1[monster_id].position.x - 2;
 		break;
 	case 1:
 		// mon2
@@ -123,13 +124,22 @@ void change_enemy_location(int monsterKind, int monster_id)
 		break;
 	case 2:
 		// mon3
-		mon3[monster_id].position.x = mon3[monster_id].position.x - 7;
+		mon3[monster_id].position.x = mon3[monster_id].position.x - 5;
 		break;
 
 
 	}
 }
 
-void draw_enemybullet() {
+void change_enemy_bullet(int monsterKind,int monster_id) {
 	// 적 총알 그리기
+	switch (monsterKind)
+	{
+	case 0:
+		// mon1
+		for (vector<Bullet>::iterator i = mon1[monster_id].bullet.begin(); i < mon1[monster_id].bullet.end(); i++)
+		{
+			i->position.x -= 1;
+		}
+	}
 }

@@ -14,10 +14,10 @@ using namespace std;
 #define PACKET_BOSS 2
 #define PACKET_GAMESTATE 3
 
-#define display_start_x 300 // 출력지점
-#define display_end_x 1100
-#define display_start_y 300
-#define display_end_y 900
+#define display_start_x 500 // 출력지점
+#define display_end_x 1500
+#define display_start_y 20
+#define display_end_y 630
 
 #define MONSTER_COUNT 30
 

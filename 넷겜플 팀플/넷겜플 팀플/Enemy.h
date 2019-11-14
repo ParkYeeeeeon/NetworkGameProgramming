@@ -29,3 +29,4 @@ void draw_enemy(HDC hdc);
 void draw_enemybullet(HDC hdc);
 void change_enemy_ani(int monsterKind, int monster_id);
 void change_enemy_location(int monsterkind, int monster_id);
+void change_enemy_bullet(int monsterKind, int monster_id);
