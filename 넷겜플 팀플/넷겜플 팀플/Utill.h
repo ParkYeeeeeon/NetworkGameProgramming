@@ -21,6 +21,8 @@ using namespace std;
 
 #define MONSTER_COUNT 30
 
+#define PLAYER_OTHER 0
+#define PLAYER_ME 1
 
 struct Location {
 	int x;
@@ -48,7 +50,7 @@ struct UI {					   // 0 : 플레이어1 , 1: 플레이어2
 void key_input(int key);
 void init_ui(UI& ui);
 void draw_ui(HDC hdc, UI& ui);
-void draw_map();
+void draw_map(HDC hdc, CImage& mapimg);
 void Connect();
 void Recv_Packet();
 void Check_Packet();

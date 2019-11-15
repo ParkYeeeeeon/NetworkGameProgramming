@@ -3,10 +3,18 @@
 
 
 void key_input(int key) {
-
 	// 키 입력 처리
 	// send()하면 되겠지??
-
+	switch (key) {
+	case VK_UP:
+		break;
+	case VK_DOWN:
+		break;
+	case VK_LEFT:
+		break;
+	case VK_RIGHT:
+		break;
+	}
 }
 
 void init_ui(UI& ui) {
@@ -45,8 +53,12 @@ void draw_ui(HDC hdc, UI& ui) {
 	}
 }
 
-void draw_map() {
+void draw_map(HDC hdc, CImage& mapimg) {
 	// map 그리기
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	mapimg.Draw(hdc, 0, 0, 1080, 720);
+
 }
 
 void Connect() {

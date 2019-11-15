@@ -1,2 +1,3 @@
 ﻿  main.cpp
-  넷겜플 팀플.vcxproj -> C:\Users\py716\OneDrive\바탕 화면\네트워크게임프로그래밍-TermProject\넷겜플 팀플\Debug\넷겜플 팀플.exe
+c:\users\얭\desktop\넷겜플 팀플\넷겜플 팀플\넷겜플 팀플\main.cpp(78): warning C4101: 'player_move' :참조되지 않은 지역 변수입니다.
+  넷겜플 팀플.vcxproj -> C:\Users\얭\Desktop\넷겜플 팀플\넷겜플 팀플\Debug\넷겜플 팀플.exe

@@ -20,6 +20,7 @@ LPCTSTR lpszClass = "ApiBase";
 
 Player PLAYER[2];
 UI ui;
+CImage mapimg;
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
@@ -74,6 +75,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
 
+	Location player_move;
+
 	switch (iMessage) {
 	case WM_CREATE:
 		srand((unsigned int)time(NULL));
@@ -81,15 +84,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
+
+		mapimg.Load("Image\\Map\\Background.png");
+		PLAYER[0].player_img.Load("Image\\Player\\Player.png");
 		init_Monster_Image();
 		init_ui(ui);
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
+		PLAYER[0].control = PLAYER_ME;
 
 		// 몬스터 애니메이션 변경 타이머
 		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
 		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
 		SetTimer(cpy_hwnd, 3, 10, NULL);	// 3번 타이머를 0.1초간(100ms) 움직인다
 		SetTimer(cpy_hwnd, 4, 1024, NULL);	// 4번 타이머를 1초간(1024ms) 움직인다
+		SetTimer(cpy_hwnd, 5, 10, NULL);
 		break;
 		
 	
@@ -103,16 +111,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
-			key_input(VK_UP);
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveY = 2;
+				}
+			}
+			
 			break;
 		case VK_DOWN:
-			key_input(VK_DOWN);
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveY = 1;
+				}
+			}
+			
 			break;
 		case VK_LEFT:
-			key_input(VK_LEFT);
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveX = 2;
+				}
+			}
 			break;
 		case VK_RIGHT:
-			key_input(VK_RIGHT);
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveX = 1;
+				}
+			}
 			break;
 		case VK_SPACE:
 			key_input(VK_SPACE);
@@ -131,12 +157,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveY = 0;
+				}
+			}
 			break;
 		case VK_DOWN:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveY = 0;
+				}
+			}
 			break;
 		case VK_LEFT:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveX = 0;
+				}
+			}
 			break;
 		case VK_RIGHT:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					PLAYER[i].moveX = 0;
+				}
+			}
 			break;
 		case VK_SPACE:
 			break;
@@ -190,6 +236,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 5:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					switch (PLAYER[i].moveX) {
+					case 1: 
+						PLAYER[i].position.x += 5;
+						break;
+					case 2:
+						PLAYER[i].position.x -= 5;
+						break;
+					}
+					switch (PLAYER[i].moveY) {
+					case 1:
+						PLAYER[i].position.y += 5;
+						break;
+					case 2:
+						PLAYER[i].position.y -= 5;
+						break;
+					}
+				}
+			}
 			break;
 
 		case 6:
@@ -220,9 +286,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		hbmMemOld = (HBITMAP)SelectObject(mem0dc, hbmMem);//4
 
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
+		draw_map(mem0dc, mapimg);
+		
 		draw_enemy(mem0dc);
-		draw_ui(mem0dc, ui);
+		draw_player(mem0dc,PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
+		
+		draw_ui(mem0dc, ui);
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
