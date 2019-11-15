@@ -75,8 +75,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
 
-	Location player_move;
-
 	switch (iMessage) {
 	case WM_CREATE:
 		srand((unsigned int)time(NULL));
@@ -87,17 +85,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		mapimg.Load("Image\\Map\\Background.png");
 		PLAYER[0].player_img.Load("Image\\Player\\Player.png");
+		PLAYER[0].player_up_img.Load("Image\\Player\\Player_up.png");
+		PLAYER[0].player_down_img.Load("Image\\Player\\Player_down.png");
+		PLAYER[0].control = PLAYER_ME;
+		
 		init_Monster_Image();
 		init_ui(ui);
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
-		PLAYER[0].control = PLAYER_ME;
 
 		// 몬스터 애니메이션 변경 타이머
-		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
-		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
-		SetTimer(cpy_hwnd, 3, 10, NULL);	// 3번 타이머를 0.1초간(100ms) 움직인다
-		SetTimer(cpy_hwnd, 4, 1024, NULL);	// 4번 타이머를 1초간(1024ms) 움직인다
-		SetTimer(cpy_hwnd, 5, 10, NULL);
+		//SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
+		//SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
+		//SetTimer(cpy_hwnd, 3, 10, NULL);	// 3번 타이머를 0.1초간(100ms) 움직인다
+		//SetTimer(cpy_hwnd, 4, 1024, NULL);	// 4번 타이머를 1초간(1024ms) 움직인다
+		
+		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		break;
 		
 	

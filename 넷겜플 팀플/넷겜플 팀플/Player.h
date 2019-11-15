@@ -13,7 +13,9 @@ struct Player {
 	vector<Bullet> bullet;
 	bool skil_activate;
 	CImage player_img;
-	
+	CImage player_up_img;
+	CImage player_down_img;
+
 	int moveX = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 	int moveY = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 };
