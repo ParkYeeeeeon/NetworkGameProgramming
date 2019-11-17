@@ -19,7 +19,7 @@ using namespace std;
 #define display_start_y 20
 #define display_end_y 630
 
-#define MONSTER_COUNT 30
+#define MONSTER_COUNT 5
 
 #define PLAYER_OTHER 0
 #define PLAYER_ME 1
@@ -32,6 +32,8 @@ struct Location {
 struct Bullet {
 	Location position;	// 총알의 위치
 	int type;			// 어떤 객체의 총알인가
+	int dir;				// 어떤 방향으로 갈지
+	int bullet_type;	// 총알 그리기 타입
 };
 
 

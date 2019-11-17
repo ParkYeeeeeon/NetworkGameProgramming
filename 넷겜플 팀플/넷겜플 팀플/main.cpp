@@ -94,10 +94,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
 
 		// 몬스터 애니메이션 변경 타이머
-		//SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
-		//SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
-		//SetTimer(cpy_hwnd, 3, 10, NULL);	// 3번 타이머를 0.1초간(100ms) 움직인다
-		//SetTimer(cpy_hwnd, 4, 1024, NULL);	// 4번 타이머를 1초간(1024ms) 움직인다
+		SetTimer(cpy_hwnd, 1, 1024, NULL);	// 1번 타이머를 1초간(1024ms) 움직인다
+		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
+		SetTimer(cpy_hwnd, 3, 5000, NULL);	// 3번 타이머를 5초간(5000ms) 움직인다
+		SetTimer(cpy_hwnd, 4, 1024, NULL);	// 4번 타이머를 1초간(1024ms) 움직인다
 		
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		break;
@@ -215,25 +215,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 3:
-			// 몬스터 위치 변화
-			for (int i = 0; i < MONSTER_COUNT; ++i)
-			{
-				change_enemy_bullet(0, i);
-				change_enemy_bullet(1, i);
-				change_enemy_bullet(2, i);
-			}
+			// 몬스터 다시 부활
+			revival_enemy();
 			break;
 
 		case 4:
 			// 몬스터 총알 추가 생성
 			for (int i = 0; i < MONSTER_COUNT; i++) {
-				for (int j = 0; j < 1; ++j) {
-					Bullet bullet;
-					bullet.position.x = mon1[i].position.x;
-					bullet.position.y = mon1[i].position.y;
-					bullet.type = 0;
-					mon1[i].bullet.push_back(bullet);
-				}
+				add_enemy_bullet(0, i);
+				add_enemy_bullet(1, i);
+				add_enemy_bullet(2, i);
 			}
 			break;
 
@@ -293,6 +284,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		draw_enemy(mem0dc);
 		draw_player(mem0dc,PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
+		draw_bullet_status(mem0dc);
 		
 		draw_ui(mem0dc, ui);
 
