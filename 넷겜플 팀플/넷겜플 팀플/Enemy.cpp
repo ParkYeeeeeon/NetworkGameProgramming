@@ -15,10 +15,10 @@ void init_Monster_Image() {
 
 	for (int i = 0; i < MONSTER_COUNT; i++) // 몬스터 위치 난수 생성
 	{
-		mon1[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
+		mon1[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) + 300;
 		mon1[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-		mon2[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
-		mon3[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
+		mon2[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) + 300;
+		mon3[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) + 300;
 		mon2[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
 		mon3[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
 
@@ -30,21 +30,30 @@ void revival_enemy() {
 	for (int i = 0; i < MONSTER_COUNT; i++)
 	{
 		if (mon1[i].alive == false) {
-			mon1[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
+			mon1[i].position.x = rand()%300 + display_end_x;
 			mon1[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-			mon1[i].alive = true;
+			//if (mon1[i].position.x < display_end_x)
+			{
+				mon1[i].alive = true;
+			}
 		}
 
 		if (mon2[i].alive == false) {
-			mon2[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
+			mon2[i].position.x = rand() % 300 + display_end_x;
 			mon2[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-			mon2[i].alive = true;
+			//if (mon2[i].position.x < display_end_x)
+			{
+				mon2[i].alive = true;
+			}
 		}
 
 		if (mon3[i].alive == false) {
-			mon3[i].position.x = (rand() % (display_end_x - display_start_x) + display_start_x) - 300;
+			mon3[i].position.x = rand() % 300 + display_end_x;
 			mon3[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-			mon3[i].alive = true;
+			//if (mon3[i].position.x < display_end_x)
+			{
+				mon3[i].alive = true;
+			}
 		}
 	}
 }

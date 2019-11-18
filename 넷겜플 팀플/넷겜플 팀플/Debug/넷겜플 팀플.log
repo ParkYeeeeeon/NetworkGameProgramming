@@ -1,6 +1,4 @@
 ﻿  Enemy.cpp
-c:\users\windowshyun\desktop\networkgameprogramming-master\넷겜플 팀플\넷겜플 팀플\enemy.cpp(238): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\py716\onedrive\바탕 화면\네트워크게임프로그래밍-termproject\넷겜플 팀플\넷겜플 팀플\enemy.cpp(247): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\stdio.h(1774): note: 'sprintf' 선언을 참조하십시오.
-  main.cpp
-  코드를 생성하고 있습니다...
-  넷겜플 팀플.vcxproj -> C:\Users\WindowsHyun\Desktop\NetworkGameProgramming-master\넷겜플 팀플\Debug\넷겜플 팀플.exe
+  넷겜플 팀플.vcxproj -> C:\Users\py716\OneDrive\바탕 화면\네트워크게임프로그래밍-TermProject\넷겜플 팀플\Debug\넷겜플 팀플.exe
