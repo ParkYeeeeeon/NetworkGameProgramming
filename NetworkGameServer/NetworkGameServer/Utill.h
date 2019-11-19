@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include <stdio.h>
 #include <Windows.h>
 #include <vector>
@@ -41,7 +42,7 @@ struct UI {					   // 0 : 플레이어1 , 1: 플레이어2
 	int time;				   // 시간 상태
 
 	CImage hp_ui_img;		   // 이미지 정보
-	CImage bomb_ui_img;        
+	CImage bomb_ui_img;
 };
 
 void key_input(int key);
