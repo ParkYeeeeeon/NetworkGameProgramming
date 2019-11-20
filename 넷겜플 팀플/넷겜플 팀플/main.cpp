@@ -82,13 +82,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
-
+		
+		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
 		PLAYER[0].player_img.Load("Image\\Player\\Player.png");
 		PLAYER[0].player_up_img.Load("Image\\Player\\Player_up.png");
 		PLAYER[0].player_down_img.Load("Image\\Player\\Player_down.png");
+		PLAYER[0].bullet_img.Load("Image\\Player\\Bullet.png");
 		PLAYER[0].control = PLAYER_ME;
-		
+
 		init_Monster_Image();
 		init_ui(ui);
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
@@ -98,11 +100,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
 		SetTimer(cpy_hwnd, 3, 5000, NULL);	// 3번 타이머를 5초간(5000ms) 움직인다
 		SetTimer(cpy_hwnd, 4, 2500, NULL);	// 4번 타이머를 2.5초간(2500) 움직인다
-		
+
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		break;
-		
-	
+
+
 
 	case WM_CHAR:
 		break;
@@ -118,7 +120,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 2;
 				}
 			}
-			
+
 			break;
 		case VK_DOWN:
 			for (int i = 0; i < 2; ++i) {
@@ -126,7 +128,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 1;
 				}
 			}
-			
+
 			break;
 		case VK_LEFT:
 			for (int i = 0; i < 2; ++i) {
@@ -143,7 +145,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			break;
 		case VK_SPACE:
-			key_input(VK_SPACE);
+			add_player_bullet(PLAYER);
+
 			break;
 		case VK_ESCAPE:
 			key_input(VK_ESCAPE);
@@ -232,7 +235,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					switch (PLAYER[i].moveX) {
-					case 1: 
+					case 1:
 						PLAYER[i].position.x += 5;
 						break;
 					case 2:
@@ -249,6 +252,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					}
 				}
 			}
+			
+			add_bullet_position(PLAYER);
 			break;
 
 		case 6:
@@ -280,12 +285,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_map(mem0dc, mapimg);
-		
+
 		draw_enemy(mem0dc);
-		draw_player(mem0dc,PLAYER);
+		draw_player(mem0dc, PLAYER);
+		draw_playerbullet(mem0dc, PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
-		
+
 		draw_ui(mem0dc, ui);
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);

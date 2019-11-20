@@ -26,9 +26,9 @@ struct Location {
 
 struct Bullet {
 	Location position;	// 총알의 위치
-	int type;			// 어떤 객체의 총알인가
+	int type;			// 어떤 객체의 총알인가 0~2 : 몬스터, 3 : 중간보스, 4 : 보스, 5 : 플레이어, 6 : 다른 플레이어 
 	int dir;				// 어떤 방향으로 갈지
-	int bullet_type;	// 총알 그리기 타입
+	int bullet_type;	// 총알 그리기 타입 ( 뭔지 기억안남)
 };
 
 
