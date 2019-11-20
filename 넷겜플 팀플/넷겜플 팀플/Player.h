@@ -1,9 +1,10 @@
 #pragma once
-#include "Utill.h"
+//#include "Utill.h"
+#include "protocol.h"
 
 #pragma pack(1) 
 struct Player {
-	int packet_type = PACKET_PLAYER;
+	int packet_type = CS_PACKET_PLAYER;
 	bool control;
 	Location position;
 	int hp;

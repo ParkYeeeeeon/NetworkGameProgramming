@@ -1,9 +1,9 @@
 #pragma once
-#include "Utill.h"
+#include "protocol.h"
 
 #pragma pack(1)
 struct Boss {
-	int packet_type = PACKET_BOSS;
+	int packet_type = CS_PACKET_BOSS;
 	Location position;
 	int hp;
 	int level;

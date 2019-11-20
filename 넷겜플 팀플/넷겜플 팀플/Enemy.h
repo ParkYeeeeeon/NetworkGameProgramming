@@ -1,9 +1,9 @@
 #pragma once
-#include "Utill.h"
+#include "protocol.h"
 
 #pragma pack(1)
 struct Enemy {
-	int packet_type = PACKET_ENEMY;
+	int packet_type = CS_PACKET_ENEMY;
 	Location position;
 	int kind = 0;		// 움직임 최대값
 	int ani = 0;

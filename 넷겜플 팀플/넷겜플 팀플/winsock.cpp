@@ -1,4 +1,6 @@
+#pragma comment(lib, "ws2_32")
 #include "protocol.h"
+#include <winsock.h>
 
 void err_quit(char *msg) {
 	LPVOID lpMsgBuf;

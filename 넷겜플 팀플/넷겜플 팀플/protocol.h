@@ -4,8 +4,8 @@
 
 #include "Utill.h"
 
-
 #define SERVERPORT 9000
+
 
 // 클라 -> 서버
 #define CS_PACKET_PLAYER 1
