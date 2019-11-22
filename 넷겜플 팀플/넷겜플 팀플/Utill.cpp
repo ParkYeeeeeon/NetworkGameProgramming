@@ -1,7 +1,5 @@
 #include "Utill.h"
 
-
-
 void key_input(int key) {
 	// 키 입력 처리
 	// send()하면 되겠지??
@@ -22,7 +20,7 @@ void init_ui(UI& ui) {
 	ui.bomb_ui_img.Load("Image\\UI\\ITEM_BOMB.png");
 
 	for (int i = 0; i < 2; ++i) {
-		ui.hp[i] = 3;
+		ui.hp[i] = 10;
 		ui.hp_position[i].x = 25;
 		ui.hp_position[i].y = 25 + (i * 550);
 
@@ -75,4 +73,8 @@ void Check_Packet() {
 
 void Send_Packet() {
 	// 패킷 send 하기
+}
+
+int get_distance(Location l1, Location l2) {
+	return (int)sqrt(pow((l2.x - l1.x), 2) + pow((l2.y - l1.y), 2));
 }

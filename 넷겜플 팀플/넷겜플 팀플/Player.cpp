@@ -34,8 +34,8 @@ void add_player_bullet(Player player[2]) {
 	for (int i = 0; i < 2; ++i) {
 		if (player[i].control == PLAYER_ME) {
 			Bullet tmp;
-			tmp.position.x = player[i].position.x + 50;
-			tmp.position.y = player[i].position.y + 15;
+			tmp.position.x = player[i].position.x + 55;
+			tmp.position.y = player[i].position.y + 20;
 			tmp.type = 5;
 			tmp.dir = 0;
 			tmp.bullet_type = 0;
@@ -49,7 +49,7 @@ void draw_playerbullet(HDC hdc, Player player[2]) {
 	for (int i = 0; i < 2; ++i) {
 		if (player[i].control == PLAYER_ME) {
 			for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j)
-				player[i].bullet_img.Draw(hdc, j->position.x, j->position.y, 25, 25);
+				player[i].bullet_img.Draw(hdc, j->position.x, j->position.y, 20, 20);
 		}
 	}
 }
@@ -61,4 +61,3 @@ void add_bullet_position(Player player[2]) {
 		}
 	}
 }
-

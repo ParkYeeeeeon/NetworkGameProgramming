@@ -22,6 +22,8 @@ Player PLAYER[2];
 UI ui;
 CImage mapimg;
 
+void crash_check();
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
 {
@@ -82,7 +84,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
-		
+
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
 		PLAYER[0].player_img.Load("Image\\Player\\Player.png");
@@ -102,6 +104,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 4, 2500, NULL);	// 4번 타이머를 2.5초간(2500) 움직인다
 
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
+		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
 		break;
 
 
@@ -145,7 +148,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			break;
 		case VK_SPACE:
-			add_player_bullet(PLAYER);
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME)
+					PLAYER[i].fire = true;
+			}
 
 			break;
 		case VK_ESCAPE:
@@ -190,6 +196,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			break;
 		case VK_SPACE:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME)
+					PLAYER[i].fire = false;
+			}
 			break;
 		}
 		InvalidateRect(hwnd, NULL, false);
@@ -252,11 +262,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					}
 				}
 			}
-			
+
 			add_bullet_position(PLAYER);
+
+			crash_check();
 			break;
 
 		case 6:
+			for (int i = 0; i < 2; ++i) {
+				if (PLAYER[i].control == PLAYER_ME) {
+					if (PLAYER[i].fire == true) {
+						add_player_bullet(PLAYER);
+						for (vector<Bullet>::iterator j = PLAYER[i].bullet.begin(); j < PLAYER[i].bullet.end();) {
+							if (j->position.x > WndX)
+								j = PLAYER[i].bullet.erase(j);
+							else
+								++j;
+						}
+					}
+
+				}
+			}
+
 			break;
 
 		case 7:
@@ -291,7 +318,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		draw_playerbullet(mem0dc, PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
-
 		draw_ui(mem0dc, ui);
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
@@ -312,3 +338,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	return(DefWindowProc(hwnd, iMessage, wParam, lParam));
 }
 
+void crash_check() {
+	for (int i = 0; i < 2; ++i) {
+		if (PLAYER[i].control == PLAYER_ME) {
+			Location player_center = PLAYER[i].position;
+			player_center.x += PLAYER_SIZE / 2;
+			player_center.y += PLAYER_SIZE / 2;
+
+			for (vector<Bullet>::iterator j = bullet.begin(); j < bullet.end();) {
+				Location bullet_center = j->position;
+				bullet_center.x += MONSTER_BULLET_SIZE / 2;
+				bullet_center.y += MONSTER_BULLET_SIZE / 2;
+				if ((PLAYER_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_center, bullet_center)) {
+					j = bullet.erase(j);
+					PLAYER[i].hp--;
+					if (ui.hp[i] != 0)
+						ui.hp[i]--;
+				}
+				else
+					++j;
+			}
+		}
+	}
+}

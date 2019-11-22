@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdlib> // 랜덤함수를 위한 헤더
 #include <ctime>
+#include <math.h>
 #include <atlimage.h> // CImage
 
 using namespace std;
@@ -18,6 +19,12 @@ using namespace std;
 
 #define PLAYER_OTHER 0
 #define PLAYER_ME 1
+
+#define PLAYER_SIZE 50
+#define PLAYER_BULLET_SIZE 20
+#define MONSTER_SIZE_X 20   
+#define MONSTER_SIZE_Y 16
+#define MONSTER_BULLET_SIZE 50
 
 struct Location {
 	int x;
@@ -52,3 +59,4 @@ void Connect();
 void Recv_Packet();
 void Check_Packet();
 void Send_Packet();
+int get_distance(Location l1, Location l2);
