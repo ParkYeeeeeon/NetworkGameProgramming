@@ -1,3 +1,6 @@
+// 콘솔창 띄우기
+#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
+
 #include <Windows.h>
 #include <vector>
 #include <atlImage.h>
@@ -7,6 +10,7 @@
 #include "Enemy.h"
 #include "Player.h"
 #include "GameState.h"
+#include "protocol.h"
 #pragma comment(lib,"winmm.lib") 
 
 using namespace std;
@@ -17,6 +21,9 @@ using namespace std;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = "ApiBase";
+
+SOCKET sock;
+HANDLE hThread;
 
 Player PLAYER[2];
 UI ui;
@@ -80,7 +87,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	switch (iMessage) {
 	case WM_CREATE:
 		srand((unsigned int)time(NULL));
-
+		init_sock();
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
@@ -118,42 +125,74 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
+		{
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 2;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+		break;
 
-			break;
 		case VK_DOWN:
+		{
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 1;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_DOWN;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+		break;
 
-			break;
 		case VK_LEFT:
+		{
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 2;
 				}
 			}
-			break;
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_LEFT;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+		break;
+
 		case VK_RIGHT:
+		{
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 1;
 				}
 			}
-			break;
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_RIGHT;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+		break;
+
 		case VK_SPACE:
+		{
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = true;
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_SPACE;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+		break;
 
-			break;
 		case VK_ESCAPE:
 			key_input(VK_ESCAPE);
 			break;
@@ -338,6 +377,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	return(DefWindowProc(hwnd, iMessage, wParam, lParam));
 }
 
+
 void crash_check() {
 	for (int i = 0; i < 2; ++i) {
 		if (PLAYER[i].control == PLAYER_ME) {
@@ -359,5 +399,87 @@ void crash_check() {
 					++j;
 			}
 		}
+	}
+}
+
+void init_sock() {
+	// 클라이언트 Sock 시작
+	int retval;
+
+	// 윈속 초기화
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		err_quit((char *)"connect()");
+
+	// socket()
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET) err_quit((char *)"socket()");
+
+	// connect()
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serveraddr.sin_port = htons(SERVERPORT);
+	bool flag = TRUE;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag));
+	retval = connect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
+	if (retval == SOCKET_ERROR)
+		err_quit((char *)"connect()");
+
+	hThread = CreateThread(NULL, 0, Read_Thread, (LPVOID)sock, 0, NULL);
+	if (hThread == NULL) {
+		closesocket(sock);
+	}
+	else {
+		CloseHandle(hThread);
+	}
+}
+
+DWORD WINAPI Read_Thread(LPVOID arg) {
+	int len;						// 데이터 크기
+
+	SOCKET client_sock = (SOCKET)arg;
+	SOCKADDR_IN clientaddr;
+
+	// 클라이언트 정보 얻기
+	int addrlen = sizeof(clientaddr);
+	getpeername(client_sock, (SOCKADDR *)&clientaddr, &addrlen);
+
+	while (1) {
+		int retval = recvn(client_sock, (char *)&len, sizeof(int), 0); // 데이터 받기(고정 길이)
+		if (retval == SOCKET_ERROR) {
+			err_display((char *)"recv()");
+			break;
+		}
+
+		if (len >= 0) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
+			//printf("Packet Size : %d\n", len);
+
+			char *buf = new char[len];
+			retval = recvn(client_sock, buf, len, 0); // 데이터 받기(가변 길이)
+			//retval = recv( client_sock, buf, len, 0 );
+			if (retval == SOCKET_ERROR) {
+				err_display((char *)"recv()");
+				break;
+			}
+			//buf[retval] = '\0';
+			//printf("Packet 0번째 : %d\n", buf[0]);
+			ProcessPacket(0, buf);
+		}
+
+
+	}
+	return 0;
+}
+
+void ProcessPacket(int ci, char *packet) {
+	switch (packet[0]) {
+	case SC_PACKET_CINO:
+		//printf("SC_PACKET_CINO\n");
+		sc_packet_cino *my_packet = reinterpret_cast<sc_packet_cino *>(packet);
+		printf("Client User No : %d\n", my_packet->no);
+
+		break;
 	}
 }

@@ -8,11 +8,7 @@ int main() {
 	init();
 
 	std::thread accept_thread{ Accept_Thread };
-	//std::thread work_thread{ Work_Thread };
-	//work_thread.join();
 	accept_thread.join();
-
-
 }
 
 void init() {
@@ -21,6 +17,7 @@ void init() {
 	listen_sock = socket( AF_INET, SOCK_STREAM, 0 );
 
 	if ( listen_sock == INVALID_SOCKET ) err_quit( "socket()" );
+
 	// bind()
 	SOCKADDR_IN serveraddr;
 	ZeroMemory( &serveraddr, sizeof( serveraddr ) );
@@ -32,12 +29,15 @@ void init() {
 
 	int retval = bind( listen_sock, (SOCKADDR *)&serveraddr, sizeof( serveraddr ) );
 	if ( retval == SOCKET_ERROR ) err_quit( "bind()" );
+
 	// listen()
 	retval = listen( listen_sock, SOMAXCONN );
 	if ( retval == SOCKET_ERROR ) err_quit( "listen()" );
 
 	for ( int i = 0; i < MAX_Player; ++i )
 		g_Clients[i].connect = false;
+
+	printf("Server init Complete..!\n");
 }
 
 void Accept_Thread() {
@@ -71,10 +71,20 @@ void Accept_Thread() {
 		// 캐릭터 초기화.
 		g_Clients[new_id].cliend_id = new_id;
 		g_Clients[new_id].connect = true;
-
+		//------------------------------------------------------------------------------------------
+		// 클라이언트 고유번호 보내기
+		sc_packet_cino packet;
+		packet.type = SC_PACKET_CINO;
+		packet.no = new_id;
+		SendPacket(client_sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		printf("Client No : %d\n", new_id);
 		//------------------------------------------------------------------------------------------
 		// Work_Thread 시작
-		hThread = CreateThread( NULL, 0, Work_Thread, (LPVOID)client_sock, 0, NULL );
+		Thread_Parameter* params = new Thread_Parameter;
+		params->sock = client_sock;
+		params->ci = new_id;
+
+		hThread = CreateThread( NULL, 0, Work_Thread, params, 0, NULL );
 		if ( hThread == NULL ) {
 			closesocket( client_sock );
 		}
@@ -88,69 +98,65 @@ void Accept_Thread() {
 	WSACleanup();
 }
 
-DWORD WINAPI Test_Thread( LPVOID arg ) {
-	int len;						// 데이터 크기
-	SOCKET client_sock = (SOCKET)arg;
-	SOCKADDR_IN clientaddr;
-
-	// 클라이언트 정보 얻기
-	int addrlen = sizeof( clientaddr );
-	getpeername( client_sock, (SOCKADDR *)&clientaddr, &addrlen );
-
-	while ( 1 ) {
-		//scanf( "%d", &test_scan );
-		int test_scan = 1;
-		switch (test_scan) {
-		}
-	}
-	return 0;
+void DisconnectClient(int ci) {
+	printf("Client ID : %d Disconnect\n", ci);
+	g_Clients[ci].connect = false;
 }
 
-
-DWORD WINAPI Work_Thread( LPVOID arg ) {
+DWORD WINAPI Work_Thread(void* parameter) {
 	int len;						// 데이터 크기
-	//char buf[MAX_Bufsize];	// 가변 길이 데이터 받아오는 버퍼
 
-	SOCKET client_sock = (SOCKET)arg;
+	Thread_Parameter* params = (Thread_Parameter*)parameter;
+
+	printf("Thread Client ID : %d\n", params->ci);
+	SOCKET client_sock = params->sock;
 	SOCKADDR_IN clientaddr;
 
 	// 클라이언트 정보 얻기
 	int addrlen = sizeof( clientaddr );
 	getpeername( client_sock, (SOCKADDR *)&clientaddr, &addrlen );
 
-	HANDLE hThread = CreateThread( NULL, 0, Test_Thread, (LPVOID)client_sock, 0, NULL );
 
 	while ( 1 ) {
 		int retval = recvn( client_sock, (char *)&len, sizeof( int ), 0 ); // 데이터 받기(고정 길이)
 		if ( retval == SOCKET_ERROR ) {
 			err_display( "recv()" );
+			DisconnectClient(params->ci);
+			closesocket(client_sock);
 			break;
 		}
 
 		if ( len >= 0 ) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
-			printf( "Packet Size : %d\n", len );
+			//printf( "Packet Size : %d\n", len );
 
 			char *buf = new char[len];
 			retval = recvn( client_sock, buf, len, 0 ); // 데이터 받기(가변 길이)
 			if ( retval == SOCKET_ERROR ) {
 				err_display( "recv()" );
+				DisconnectClient(params->ci);
+				closesocket(client_sock);
 				break;
 			}
 			//buf[retval] = '\0';
-			printf( "Packet 0번째 : %d\n", buf[0] );
+			//printf( "Packet 0번째 : %d\n", buf[0] );
 			ProcessPacket( 0, buf );
 
 		}
 
 
 	}
-	CloseHandle( hThread );
 	return 0;
 }
 
 void ProcessPacket( int ci, char *packet ) {
 	switch ( packet[0] ) {
-	
+	case CS_PACKET_DIR:
+		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
+		printf("[%d] : %d\n", ci, my_packet->dir);
+		if (my_packet->dir == VK_RIGHT) {
+			printf("VK_RIGHT\n");
+		}
+		break;
 
 	}
 }

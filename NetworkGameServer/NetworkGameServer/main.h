@@ -25,6 +25,11 @@ struct CLIENT {
 	char nickName[16];							// 캐릭터 닉네임
 };
 
+struct Thread_Parameter {
+	SOCKET sock;
+	int ci;
+};
+
 void init();														// 소켓 초기화 및 클라이언트 데이터 초기화
 void err_quit( char *msg );									// 소켓 오류시 에러 출력 해주는 함수
 void err_display( char *msg );								// 소켓 오류시 에러 출력 해주는 함수
@@ -34,5 +39,5 @@ void Accept_Thread();											// 클라 들어오는걸 받아주는 Thread
 void ProcessPacket( int ci, char *packet );				// packet 처리를 하는 부분
 DWORD WINAPI Work_Thread( LPVOID arg );			// 클라에서 전송된 Packet을 읽어서 처리해준다.
 void SendPacket( SOCKET sock, void *packet, int packet_size );		// 패킷을 클라에게 보낼때 하는 함수
-
+void DisconnectClient(int ci);				// 클라이언트 연결이 끊어 졌을 경우 처리 함수
 #endif

@@ -60,3 +60,11 @@ void Recv_Packet();
 void Check_Packet();
 void Send_Packet();
 int get_distance(Location l1, Location l2);
+
+void init_sock();
+void err_quit(char *msg);									// 소켓 오류시 에러 출력 해주는 함수
+void err_display(char *msg);								// 소켓 오류시 에러 출력 해주는 함수
+int recvn(SOCKET s, char *buf, int len, int flags);		// Recv 받을때 사용 하는 함수
+void SendPacket(SOCKET sock, void *packet, int packet_size);		// Packet 전송
+DWORD WINAPI Read_Thread(LPVOID arg);
+void ProcessPacket(int ci, char *packet);
