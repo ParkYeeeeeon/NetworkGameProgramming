@@ -79,7 +79,6 @@ struct cs_packet_gamestate {
 	int score;
 	int activated_thread;
 
-
 };
 
 struct sc_packet_cino {

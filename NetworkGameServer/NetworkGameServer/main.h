@@ -1,5 +1,6 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
+
 #pragma comment(lib, "ws2_32")
 
 #include <WinSock2.h>
@@ -8,12 +9,11 @@
 #include <iostream>
 #include <thread>
 #include <Windows.h>
-
-
+#include <time.h>
+#include "Object.h"
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS	// 윈속 오류 방지
 #define MAX_Player 2
-
 
 struct CLIENT {
 	int cliend_id = -1;							// 몇번째 접근한 클라이언트 인지 확인.
@@ -38,6 +38,9 @@ int recvn( SOCKET s, char *buf, int len, int flags );		// Recv 받을때 사용 하는 
 void Accept_Thread();											// 클라 들어오는걸 받아주는 Thread
 void ProcessPacket( int ci, char *packet );				// packet 처리를 하는 부분
 DWORD WINAPI Work_Thread( LPVOID arg );			// 클라에서 전송된 Packet을 읽어서 처리해준다.
+DWORD WINAPI Calc_Thread(LPVOID arg);
+
 void SendPacket( SOCKET sock, void *packet, int packet_size );		// 패킷을 클라에게 보낼때 하는 함수
 void DisconnectClient(int ci);				// 클라이언트 연결이 끊어 졌을 경우 처리 함수
+
 #endif

@@ -83,6 +83,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	HWND cpy_hwnd;
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
+	cs_packet_dir packet;
 
 	switch (iMessage) {
 	case WM_CREATE:
@@ -94,7 +95,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
-		
+
 
 		init_Monster_Image();
 		init_ui(ui);
@@ -108,12 +109,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
+		
 		break;
 
-
+	
 
 	case WM_CHAR:
 		break;
+
 
 	case WM_LBUTTONDOWN:
 		break;
@@ -122,12 +125,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		{
 		case VK_UP:
 		{
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 2;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_UP;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -136,12 +138,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		case VK_DOWN:
 		{
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 1;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_DOWN;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -150,12 +151,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		case VK_LEFT:
 		{
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 2;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_LEFT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -164,12 +164,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		case VK_RIGHT:
 		{
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 1;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_RIGHT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -182,7 +181,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = true;
 			}
-			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_SPACE;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -203,45 +201,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 0;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_UP;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_DOWN:
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveY = 0;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_DOWN;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_LEFT:
-			for (int i = 0; i < 2; ++i) {
+			/*for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 0;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_LEFT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_RIGHT:
-			for (int i = 0; i < 2; ++i) {
+		/*	for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					PLAYER[i].moveX = 0;
 				}
-			}
-			cs_packet_dir packet;
+			}*/
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_RIGHT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -251,7 +245,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = false;
 			}
-			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_SPACE;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
@@ -354,7 +347,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 			break;
 		}
-		InvalidateRgn(hwnd, NULL, FALSE);
+		InvalidateRect(hwnd, NULL, false);
 		break;
 
 	case WM_PAINT:
@@ -482,6 +475,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			//buf[retval] = '\0';
 			//printf("Packet 0번째 : %d\n", buf[0]);
 			ProcessPacket(0, buf);
+
 		}
 
 
@@ -499,8 +493,9 @@ void ProcessPacket(int ci, char *packet) {
 		for (int i = 0; i < 2; ++i) {
 			if (i == my_packet->no)
 				PLAYER[i].control = PLAYER_ME;
-			if (PLAYER[i].control != PLAYER_ME)
+			else
 				PLAYER[i].control = PLAYER_OTHER;
+			printf("%d\n", PLAYER[i].control);
 		}
 		break;
 
@@ -512,18 +507,19 @@ void ProcessPacket(int ci, char *packet) {
 		PLAYER[0].bullet_damage = player_0->bullet_damage;
 		PLAYER[0].attack_speed = player_0->attack_speed;
 		PLAYER[0].bomb = player_0->bomb;
-		PLAYER[0].bullet = player_0->b;
+		//PLAYER[0].bullet = player_0->b;
 		break;
 
 	case SC_PACKET_PLAYER_1:
 		cs_packet_player *player_1;
 		player_1 = reinterpret_cast<cs_packet_player *>(packet);
-		PLAYER[0].position = player_1->position;
-		PLAYER[0].hp = player_1->hp;
-		PLAYER[0].bullet_damage = player_1->bullet_damage;
-		PLAYER[0].attack_speed = player_1->attack_speed;
-		PLAYER[0].bomb = player_1->bomb;
-		PLAYER[0].bullet = player_1->b;
+		PLAYER[1].position = player_1->position;
+		PLAYER[1].hp = player_1->hp;
+		PLAYER[1].bullet_damage = player_1->bullet_damage;
+		PLAYER[1].attack_speed = player_1->attack_speed;
+		PLAYER[1].bomb = player_1->bomb;
+		//PLAYER[0].bullet = player_1->b;
 		break;
+
 	}
 }
