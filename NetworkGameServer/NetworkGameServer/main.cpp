@@ -11,7 +11,7 @@ int main() {
 	accept_thread.join();
 }
 
-void init() {
+void init() {	
 	WSADATA wsa;
 	WSAStartup( MAKEWORD( 2, 2 ), &wsa );
 	listen_sock = socket( AF_INET, SOCK_STREAM, 0 );
@@ -153,8 +153,32 @@ void ProcessPacket( int ci, char *packet ) {
 	case CS_PACKET_DIR:
 		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 		printf("[%d] : %d\n", ci, my_packet->dir);
-		if (my_packet->dir == VK_RIGHT) {
-			printf("VK_RIGHT\n");
+		switch (my_packet->dir)
+		{
+		case VK_UP_UP:
+			printf("[%d] : %d\n", ci, VK_UP_UP);
+			break;
+		case VK_UP_DOWN:
+			printf("[%d] : %d\n", ci, VK_UP_DOWN);
+			break;
+		case VK_UP_LEFT:
+			printf("[%d] : %d\n", ci, VK_UP_LEFT);
+			break;
+		case VK_UP_RIGHT:
+			printf("[%d] : %d\n", ci, VK_UP_RIGHT);
+			break;
+		case VK_DOWN_UP:
+			printf("[%d] : %d\n", ci, VK_DOWN_UP);
+			break;
+		case VK_DOWN_DOWN:
+			printf("[%d] : %d\n", ci, VK_DOWN_DOWN);
+			break;
+		case VK_DOWN_LEFT:
+			printf("[%d] : %d\n", ci, VK_DOWN_LEFT);
+			break;
+		case VK_DOWN_RIGHT:
+			printf("[%d] : %d\n", ci, VK_DOWN_RIGHT);
+			break;
 		}
 		break;
 

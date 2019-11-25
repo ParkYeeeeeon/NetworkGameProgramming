@@ -94,11 +94,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
-		PLAYER[0].player_img.Load("Image\\Player\\Player.png");
-		PLAYER[0].player_up_img.Load("Image\\Player\\Player_up.png");
-		PLAYER[0].player_down_img.Load("Image\\Player\\Player_down.png");
-		PLAYER[0].bullet_img.Load("Image\\Player\\Bullet.png");
-		PLAYER[0].control = PLAYER_ME;
+		
 
 		init_Monster_Image();
 		init_ui(ui);
@@ -133,7 +129,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP;
+			packet.dir = VK_DOWN_UP;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -147,7 +143,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN;
+			packet.dir = VK_DOWN_DOWN;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -161,7 +157,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_LEFT;
+			packet.dir = VK_DOWN_LEFT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -175,7 +171,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_RIGHT;
+			packet.dir = VK_DOWN_RIGHT;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -188,7 +184,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 			cs_packet_dir packet;
 			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_SPACE;
+			packet.dir = VK_DOWN_SPACE;
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -212,6 +208,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 0;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP_UP;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_DOWN:
 			for (int i = 0; i < 2; ++i) {
@@ -219,6 +219,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 0;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP_DOWN;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_LEFT:
 			for (int i = 0; i < 2; ++i) {
@@ -226,6 +230,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 0;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP_LEFT;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_RIGHT:
 			for (int i = 0; i < 2; ++i) {
@@ -233,12 +241,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 0;
 				}
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP_RIGHT;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_SPACE:
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = false;
 			}
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dir = VK_UP_SPACE;
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		}
 		InvalidateRect(hwnd, NULL, false);
@@ -419,7 +435,7 @@ void init_sock() {
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 	bool flag = TRUE;
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag));
@@ -477,9 +493,37 @@ void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
 	case SC_PACKET_CINO:
 		//printf("SC_PACKET_CINO\n");
-		sc_packet_cino *my_packet = reinterpret_cast<sc_packet_cino *>(packet);
+		sc_packet_cino *my_packet;
+		my_packet = reinterpret_cast<sc_packet_cino *>(packet);
 		printf("Client User No : %d\n", my_packet->no);
+		for (int i = 0; i < 2; ++i) {
+			if (i == my_packet->no)
+				PLAYER[i].control = PLAYER_ME;
+			if (PLAYER[i].control != PLAYER_ME)
+				PLAYER[i].control = PLAYER_OTHER;
+		}
+		break;
 
+	case SC_PACKET_PLAYER_0:
+		cs_packet_player *player_0;
+		player_0 = reinterpret_cast<cs_packet_player *>(packet);
+		PLAYER[0].position = player_0->position;
+		PLAYER[0].hp = player_0->hp;
+		PLAYER[0].bullet_damage = player_0->bullet_damage;
+		PLAYER[0].attack_speed = player_0->attack_speed;
+		PLAYER[0].bomb = player_0->bomb;
+		PLAYER[0].bullet = player_0->b;
+		break;
+
+	case SC_PACKET_PLAYER_1:
+		cs_packet_player *player_1;
+		player_1 = reinterpret_cast<cs_packet_player *>(packet);
+		PLAYER[0].position = player_1->position;
+		PLAYER[0].hp = player_1->hp;
+		PLAYER[0].bullet_damage = player_1->bullet_damage;
+		PLAYER[0].attack_speed = player_1->attack_speed;
+		PLAYER[0].bomb = player_1->bomb;
+		PLAYER[0].bullet = player_1->b;
 		break;
 	}
 }

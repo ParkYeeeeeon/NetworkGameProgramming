@@ -25,12 +25,26 @@ struct Bullet {
 #define CS_PACKET_BOSS 3
 #define CS_PACKET_GAMESTATE 4
 #define CS_PACKET_DIR 5
+#define CS_PACKET_ATTACK 6
+
+#define VK_UP_UP 100
+#define VK_DOWN_UP 101
+#define VK_UP_DOWN 200
+#define VK_DOWN_DOWN 201
+#define VK_UP_LEFT 300
+#define VK_DOWN_LEFT 301
+#define VK_UP_RIGHT 400
+#define VK_DOWN_RIGHT 401
+#define VK_UP_SPACE 500
+#define VK_DOWN_SPACE 501
 
 // 서버 -> 클라
 #define SC_PACKET_CINO 1
 #define SC_PACKET_DIR 2
 #define SC_PACKET_ATTACK 3
 #define SC_PACKET_BOMB 4
+#define SC_PACKET_PLAYER_0 5
+#define SC_PACKET_PLAYER_1 6
 
 // 패킷 구조체 정보
 struct cs_packet_dir {

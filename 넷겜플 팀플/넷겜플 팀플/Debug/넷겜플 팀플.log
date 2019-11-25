@@ -1,1 +1,4 @@
-﻿  넷겜플 팀플.vcxproj -> C:\Users\py716\OneDrive\바탕 화면\네트워크게임프로그래밍-TermProject\넷겜플 팀플\Debug\넷겜플 팀플.exe
+﻿  main.cpp
+c:\users\얭\desktop\넷겜플 팀플\넷겜플 팀플\넷겜플 팀플\main.cpp(493): warning C4244: '=': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\얭\desktop\넷겜플 팀플\넷겜플 팀플\넷겜플 팀플\main.cpp(504): warning C4244: '=': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  넷겜플 팀플.vcxproj -> C:\Users\얭\Desktop\넷겜플 팀플\넷겜플 팀플\Debug\넷겜플 팀플.exe
