@@ -137,7 +137,7 @@ DWORD WINAPI Work_Thread(void* parameter) {
 		// 플레이어 이동 좌표 전송
 		if (new_id == 1) {
 			now = clock();
-			if (difftime(now, send_time) >= (clock_t)60) {
+			if (difftime(now, send_time) >= (clock_t)66) {
 				cs_packet_player packet;
 				for (int i = 0; i < MAX_Player; ++i) {
 					if (i == 0) {
@@ -241,18 +241,18 @@ DWORD WINAPI Calc_Thread(LPVOID arg) {
 			for (int i = 0; i < MAX_Player; ++i) {
 				switch (PLAYER[i].moveX) {
 				case 1:
-					PLAYER[i].position.x += 5;
+					PLAYER[i].position.x += 3;
 					break;
 				case 2:
-					PLAYER[i].position.x -= 5;
+					PLAYER[i].position.x -= 3;
 					break;
 				}
 				switch (PLAYER[i].moveY) {
 				case 1:
-					PLAYER[i].position.y += 5;
+					PLAYER[i].position.y += 3;
 					break;
 				case 2:
-					PLAYER[i].position.y -= 5;
+					PLAYER[i].position.y -= 3;
 					break;
 				}
 			}

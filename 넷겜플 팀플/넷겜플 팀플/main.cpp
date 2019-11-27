@@ -29,6 +29,9 @@ Player PLAYER[2];
 UI ui;
 CImage mapimg;
 
+cs_packet_dir packet;
+
+
 void crash_check();
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
@@ -83,7 +86,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	HWND cpy_hwnd;
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
-	cs_packet_dir packet;
+	
+
 
 	switch (iMessage) {
 	case WM_CREATE:
@@ -92,6 +96,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
+
+		packet.type = CS_PACKET_DIR;
+		packet.dir = 0;
 
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
@@ -109,7 +116,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
-		
+
+		SetTimer(cpy_hwnd, 7, 66, NULL);
 		break;
 
 	
@@ -130,9 +138,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 2;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_UP;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
 
@@ -143,9 +151,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 1;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_DOWN;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
 
@@ -156,9 +164,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 2;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_LEFT;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
 
@@ -169,9 +177,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 1;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_DOWN_RIGHT;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
 
@@ -181,9 +189,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = true;
 			}
-			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN_SPACE;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//packet.type = CS_PACKET_DIR;
+			//packet.dir = VK_DOWN_SPACE;
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
 
@@ -206,9 +214,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 0;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_UP;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_DOWN:
 			/*for (int i = 0; i < 2; ++i) {
@@ -216,9 +224,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveY = 0;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_DOWN;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_LEFT:
 			/*for (int i = 0; i < 2; ++i) {
@@ -226,9 +234,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 0;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_LEFT;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_RIGHT:
 		/*	for (int i = 0; i < 2; ++i) {
@@ -236,18 +244,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					PLAYER[i].moveX = 0;
 				}
 			}*/
-			packet.type = CS_PACKET_DIR;
+			//packet.type = CS_PACKET_DIR;
 			packet.dir = VK_UP_RIGHT;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_SPACE:
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME)
 					PLAYER[i].fire = false;
 			}
-			packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP_SPACE;
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			//packet.type = CS_PACKET_DIR;
+			//packet.dir = VK_UP_SPACE;
+			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		}
 		InvalidateRect(hwnd, NULL, false);
@@ -294,18 +302,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				if (PLAYER[i].control == PLAYER_ME) {
 					switch (PLAYER[i].moveX) {
 					case 1:
-						PLAYER[i].position.x += 5;
+						PLAYER[i].position.x += 3;
 						break;
 					case 2:
-						PLAYER[i].position.x -= 5;
+						PLAYER[i].position.x -= 3;
 						break;
 					}
 					switch (PLAYER[i].moveY) {
 					case 1:
-						PLAYER[i].position.y += 5;
+						PLAYER[i].position.y += 3;
 						break;
 					case 2:
-						PLAYER[i].position.y -= 5;
+						PLAYER[i].position.y -= 3;
 						break;
 					}
 				}
@@ -335,6 +343,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 7:
+			printf("%d\n", packet.dir);
+			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			packet.dir = 0;
 			break;
 
 		case 8:
@@ -475,7 +486,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			//buf[retval] = '\0';
 			//printf("Packet 0번째 : %d\n", buf[0]);
 			ProcessPacket(0, buf);
-
+			
 		}
 
 
