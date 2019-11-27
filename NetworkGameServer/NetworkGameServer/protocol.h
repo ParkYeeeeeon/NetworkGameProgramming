@@ -50,7 +50,8 @@ struct Bullet {
 struct cs_packet_dir {
 	int type;
 	//----------------
-	int dir;
+	int dirX;
+	int dirY;
 };
 
 struct cs_packet_player {

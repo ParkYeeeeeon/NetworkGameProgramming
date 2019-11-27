@@ -98,7 +98,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		GetClientRect(hwnd, &rt);
 
 		packet.type = CS_PACKET_DIR;
-		packet.dir = 0;
+		packet.dirX = 0;
+		packet.dirY = 0;
 
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
@@ -139,7 +140,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN_UP;
+			packet.dirY = VK_DOWN_UP;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -152,7 +153,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN_DOWN;
+			packet.dirY = VK_DOWN_DOWN;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -165,7 +166,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN_LEFT;
+			packet.dirX = VK_DOWN_LEFT;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -178,7 +179,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_DOWN_RIGHT;
+			packet.dirX = VK_DOWN_RIGHT;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 		break;
@@ -215,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP_UP;
+			packet.dirY = VK_UP_UP;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_DOWN:
@@ -225,7 +226,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP_DOWN;
+			packet.dirY = VK_UP_DOWN;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_LEFT:
@@ -235,7 +236,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP_LEFT;
+			packet.dirX = VK_UP_LEFT;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_RIGHT:
@@ -245,7 +246,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}*/
 			//packet.type = CS_PACKET_DIR;
-			packet.dir = VK_UP_RIGHT;
+			packet.dirX = VK_UP_RIGHT;
 			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			break;
 		case VK_SPACE:
@@ -343,9 +344,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 7:
-			printf("%d\n", packet.dir);
+			printf("X : %d\n", packet.dirX);
+			printf("Y : %d\n", packet.dirY);
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			packet.dir = 0;
+			packet.dirX = 0;
+			packet.dirY = 0;
 			break;
 
 		case 8:

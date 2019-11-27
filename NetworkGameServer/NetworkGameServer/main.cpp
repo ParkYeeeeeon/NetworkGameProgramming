@@ -194,26 +194,15 @@ void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
 	case CS_PACKET_DIR:
 		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
-		printf("[%d] : %d\n", ci, my_packet->dir);
-		switch (my_packet->dir)
+		printf("[%d] : %d\n", ci, my_packet->dirX);
+		printf("[%d] : %d\n", ci, my_packet->dirY);
+		switch (my_packet->dirX)
 		{
-		case VK_UP_UP:
-			PLAYER[ci].moveY = 0;
-			break;
-		case VK_UP_DOWN:
-			PLAYER[ci].moveY = 0;
-			break;
 		case VK_UP_LEFT:
 			PLAYER[ci].moveX = 0;
 			break;
 		case VK_UP_RIGHT:
 			PLAYER[ci].moveX = 0;
-			break;
-		case VK_DOWN_UP:
-			PLAYER[ci].moveY = 2;
-			break;
-		case VK_DOWN_DOWN:
-			PLAYER[ci].moveY = 1;
 			break;
 		case VK_DOWN_LEFT:
 			PLAYER[ci].moveX = 2;
@@ -222,10 +211,26 @@ void ProcessPacket(int ci, char *packet) {
 			PLAYER[ci].moveX = 1;
 			break;
 		}
+		switch (my_packet->dirY)
+		{
+		case VK_UP_UP:
+			PLAYER[ci].moveY = 0;
+			break;
+		case VK_UP_DOWN:
+			PLAYER[ci].moveY = 0;
+			break;
+		case VK_DOWN_UP:
+			PLAYER[ci].moveY = 2;
+			break;
+		case VK_DOWN_DOWN:
+			PLAYER[ci].moveY = 1;
+			break;
+		}
 		break;
-
 	}
 }
+
+		
 
 DWORD WINAPI Calc_Thread(LPVOID arg) {
 
