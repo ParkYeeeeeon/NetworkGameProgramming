@@ -31,6 +31,8 @@
 #define SC_PACKET_BOMB 4
 #define SC_PACKET_PLAYER_0 5
 #define SC_PACKET_PLAYER_1 6
+#define SC_PACKET_CONNECT 7
+
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -86,6 +88,21 @@ struct sc_packet_cino {
 	int type;
 	//----------------
 	int no;
+};
+
+struct sc_packet_connect {
+	int type;
+	//----------------
+	int no;
+	bool connect;
+};
+
+struct sc_packet_location {
+	int type;
+	//----------------
+	int ci;
+	int x;
+	int y;
 };
 
 struct sc_packet_attack {

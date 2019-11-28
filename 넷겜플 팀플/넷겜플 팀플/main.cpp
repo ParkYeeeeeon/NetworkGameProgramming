@@ -28,8 +28,7 @@ HANDLE hThread;
 Player PLAYER[2];
 UI ui;
 CImage mapimg;
-
-cs_packet_dir packet;
+int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 
 
 void crash_check();
@@ -86,7 +85,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	HWND cpy_hwnd;
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
-	
+
 
 
 	switch (iMessage) {
@@ -96,10 +95,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		cpy_hwnd = hwnd;
 
 		GetClientRect(hwnd, &rt);
-
-		packet.type = CS_PACKET_DIR;
-		packet.dirX = 0;
-		packet.dirY = 0;
 
 		set_player(PLAYER);
 		mapimg.Load("Image\\Map\\Background.png");
@@ -118,10 +113,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
 
-		SetTimer(cpy_hwnd, 7, 66, NULL);
+		SetTimer(cpy_hwnd, 7, 34, NULL);
 		break;
 
-	
+
 
 	case WM_CHAR:
 		break;
@@ -129,58 +124,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 	case WM_LBUTTONDOWN:
 		break;
+
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
 		case VK_UP:
 		{
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveY = 2;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirY = VK_DOWN_UP;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirY = VK_DOWN_UP;
 		}
 		break;
 
 		case VK_DOWN:
 		{
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveY = 1;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirY = VK_DOWN_DOWN;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirY = VK_DOWN_DOWN;
 		}
 		break;
 
 		case VK_LEFT:
 		{
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveX = 2;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirX = VK_DOWN_LEFT;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirX = VK_DOWN_LEFT;
 		}
 		break;
 
 		case VK_RIGHT:
 		{
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveX = 1;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirX = VK_DOWN_RIGHT;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirX = VK_DOWN_RIGHT;
 		}
 		break;
 
@@ -210,45 +178,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		switch (wParam)
 		{
 		case VK_UP:
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveY = 0;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirY = VK_UP_UP;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirY = VK_UP_UP;
 			break;
+
 		case VK_DOWN:
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveY = 0;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirY = VK_UP_DOWN;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirY = VK_UP_DOWN;
 			break;
+
 		case VK_LEFT:
-			/*for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveX = 0;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirX = VK_UP_LEFT;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirX = VK_UP_LEFT;
 			break;
+
 		case VK_RIGHT:
-		/*	for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					PLAYER[i].moveX = 0;
-				}
-			}*/
-			//packet.type = CS_PACKET_DIR;
-			packet.dirX = VK_UP_RIGHT;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			PLAYER[client_no].dirX = VK_UP_RIGHT;
 			break;
+
 		case VK_SPACE:
 			for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME)
@@ -344,12 +288,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 7:
-			printf("X : %d\n", packet.dirX);
-			printf("Y : %d\n", packet.dirY);
+		{
+			cs_packet_dir packet;
+			packet.type = CS_PACKET_DIR;
+			packet.dirX = PLAYER[client_no].dirX;
+			packet.dirY = PLAYER[client_no].dirY;
+			//printf("X : %d\n", packet.dirX);
+			//printf("Y : %d\n", packet.dirY);
 			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			packet.dirX = 0;
-			packet.dirY = 0;
-			break;
+			PLAYER[client_no].dirX = 0;
+			PLAYER[client_no].dirY = 0;
+		}
+		break;
 
 		case 8:
 			break;
@@ -376,7 +326,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		draw_map(mem0dc, mapimg);
 
 		draw_enemy(mem0dc);
-		draw_player(mem0dc, PLAYER);
+		for (int i = 0; i < LIMIT_PLAYER; ++i) {
+			// 플레이어가 접속 했을 때만 그려 준다.
+			if (PLAYER[i].connect == true) {
+				draw_player(mem0dc, PLAYER, i);
+			}
+		}
+		//draw_player(mem0dc, PLAYER, 0);
+		//draw_player(mem0dc, PLAYER, 1);
 		draw_playerbullet(mem0dc, PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
@@ -402,7 +359,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 
 void crash_check() {
-	for (int i = 0; i < 2; ++i) {
+	if (PLAYER[client_no].connect == true) {
+
+		Location player_center = PLAYER[client_no].position;
+		player_center.x += PLAYER_SIZE / 2;
+		player_center.y += PLAYER_SIZE / 2;
+
+		for (vector<Bullet>::iterator j = bullet.begin(); j < bullet.end();) {
+			Location bullet_center = j->position;
+			bullet_center.x += MONSTER_BULLET_SIZE / 2;
+			bullet_center.y += MONSTER_BULLET_SIZE / 2;
+			if ((PLAYER_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_center, bullet_center)) {
+				j = bullet.erase(j);
+				PLAYER[client_no].hp--;
+				if (ui.hp[client_no] != 0)
+					ui.hp[client_no]--;
+			}
+			else
+				++j;
+		}
+
+	}
+
+
+	/*for (int i = 0; i < 2; ++i) {
 		if (PLAYER[i].control == PLAYER_ME) {
 			Location player_center = PLAYER[i].position;
 			player_center.x += PLAYER_SIZE / 2;
@@ -422,7 +402,7 @@ void crash_check() {
 					++j;
 			}
 		}
-	}
+	}*/
 }
 
 void init_sock() {
@@ -489,7 +469,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			//buf[retval] = '\0';
 			//printf("Packet 0번째 : %d\n", buf[0]);
 			ProcessPacket(0, buf);
-			
+
 		}
 
 
@@ -500,40 +480,31 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
 	case SC_PACKET_CINO:
-		//printf("SC_PACKET_CINO\n");
+	{
 		sc_packet_cino *my_packet;
 		my_packet = reinterpret_cast<sc_packet_cino *>(packet);
 		printf("Client User No : %d\n", my_packet->no);
-		for (int i = 0; i < 2; ++i) {
-			if (i == my_packet->no)
-				PLAYER[i].control = PLAYER_ME;
-			else
-				PLAYER[i].control = PLAYER_OTHER;
-			printf("%d\n", PLAYER[i].control);
-		}
-		break;
+		PLAYER[my_packet->no].connect = true;
+		client_no = my_packet->no;
+	}
+	break;
 
-	case SC_PACKET_PLAYER_0:
-		cs_packet_player *player_0;
-		player_0 = reinterpret_cast<cs_packet_player *>(packet);
-		PLAYER[0].position = player_0->position;
-		PLAYER[0].hp = player_0->hp;
-		PLAYER[0].bullet_damage = player_0->bullet_damage;
-		PLAYER[0].attack_speed = player_0->attack_speed;
-		PLAYER[0].bomb = player_0->bomb;
-		//PLAYER[0].bullet = player_0->b;
-		break;
+	case SC_PACKET_DIR:
+	{
+		sc_packet_location *my_packet;
+		my_packet = reinterpret_cast<sc_packet_location *>(packet);
+		PLAYER[my_packet->ci].position.x = my_packet->x;
+		PLAYER[my_packet->ci].position.y = my_packet->y;
+	}
+	break;
 
-	case SC_PACKET_PLAYER_1:
-		cs_packet_player *player_1;
-		player_1 = reinterpret_cast<cs_packet_player *>(packet);
-		PLAYER[1].position = player_1->position;
-		PLAYER[1].hp = player_1->hp;
-		PLAYER[1].bullet_damage = player_1->bullet_damage;
-		PLAYER[1].attack_speed = player_1->attack_speed;
-		PLAYER[1].bomb = player_1->bomb;
-		//PLAYER[0].bullet = player_1->b;
-		break;
+	case SC_PACKET_CONNECT:
+	{
+		sc_packet_connect *my_packet;
+		my_packet = reinterpret_cast<sc_packet_connect *>(packet);
+		PLAYER[my_packet->no].connect = my_packet->connect;
+	}
+	break;
 
 	}
 }

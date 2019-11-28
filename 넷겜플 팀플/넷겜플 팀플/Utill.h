@@ -17,6 +17,7 @@ using namespace std;
 
 #define MONSTER_COUNT 5
 
+#define LIMIT_PLAYER 2	// 최대 들어올 수 있는 플레이어 개수
 #define PLAYER_OTHER 0
 #define PLAYER_ME 1
 

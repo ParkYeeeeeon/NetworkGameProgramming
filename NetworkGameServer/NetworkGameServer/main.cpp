@@ -8,7 +8,7 @@ SOCKET listen_sock;
 int new_id = -1;	// 몇 번째 클라이언트 인지 확인 하기 위한 변수
 clock_t send_time;
 
-Player PLAYER[2];
+//Player PLAYER[2];
 UI ui;
 
 
@@ -50,7 +50,7 @@ void init() {
 
 void Accept_Thread() {
 	SOCKADDR_IN clientaddr;
-	HANDLE hThread, CalcThread;
+	HANDLE hThread;
 	while (1) {
 		// accept()
 		int addrlen = sizeof(clientaddr);
@@ -79,6 +79,7 @@ void Accept_Thread() {
 		// 캐릭터 초기화.
 		g_Clients[new_id].cliend_id = new_id;
 		g_Clients[new_id].connect = true;
+		g_Clients[new_id].sock = client_sock;
 		//------------------------------------------------------------------------------------------
 		// 클라이언트 고유번호 보내기
 		sc_packet_cino packet;
@@ -87,15 +88,32 @@ void Accept_Thread() {
 		SendPacket(client_sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		printf("Client No : %d\n", new_id);
 		//------------------------------------------------------------------------------------------
+		// 이미 들어온 유저에게 접속 상태를 알린다.
+		for (int i = 0; i < MAX_Player; ++i) {
+			// 자신의 경우 CINO로 접속 여부를 보내주므로 패스 한다.
+			if (i == new_id)
+				continue;
+			// 연결이 되어 있지 않는 클라이언트에게는 보내지 않는다.
+			if (g_Clients[i].connect == false)
+				continue;
+			connect_player(i, new_id, true);
+		}
+		//------------------------------------------------------------------------------------------
+		// 새로 들어온 유저가 이미 들어온 유저들의 상태를 받는다.
+		for (int i = 0; i < MAX_Player; ++i) {
+			// 자신의 경우 CINO로 접속 여부를 보내주므로 패스 한다.
+			if (i == new_id)
+				continue;
+			// 연결이 되어 있지 않는 클라이언트에게는 보내지 않는다.
+			if (g_Clients[i].connect == false)
+				continue;
+			connect_player(new_id, i, true);
+		}
+		//------------------------------------------------------------------------------------------
 		// Work_Thread 시작
 		Thread_Parameter* params = new Thread_Parameter;
 		params->sock = client_sock;
 		params->ci = new_id;
-
-		if (new_id == 1) {
-			CalcThread = CreateThread(NULL, 0, Calc_Thread, NULL, 0, NULL);
-			send_time = clock();
-		}
 
 		hThread = CreateThread(NULL, 0, Work_Thread, params, 0, NULL);
 		if (hThread == NULL) {
@@ -114,13 +132,23 @@ void Accept_Thread() {
 void DisconnectClient(int ci) {
 	printf("Client ID : %d Disconnect\n", ci);
 	g_Clients[ci].connect = false;
+
+	// 상대가 나갔을 경우 나갔다고 모든 유저에게 전송을 해준다.
+	for (int i = 0; i < MAX_Player; ++i) {
+		// 자신의 경우 CINO로 접속 여부를 보내주므로 패스 한다.
+		if (i == ci)
+			continue;
+		// 연결이 되어 있지 않는 클라이언트에게는 보내지 않는다.
+		if (g_Clients[i].connect == false)
+			continue;
+		connect_player(i, ci, false);
+	}
 }
 
 DWORD WINAPI Work_Thread(void* parameter) {
 	int len;						// 데이터 크기
 
-	clock_t now;
-
+	
 	Thread_Parameter* params = (Thread_Parameter*)parameter;
 
 	printf("Thread Client ID : %d\n", params->ci);
@@ -133,32 +161,6 @@ DWORD WINAPI Work_Thread(void* parameter) {
 
 
 	while (1) {
-		//-----------------------------------------------------------------------------------------------------------
-		// 플레이어 이동 좌표 전송
-		if (new_id == 1) {
-			now = clock();
-			if (difftime(now, send_time) >= (clock_t)66) {
-				cs_packet_player packet;
-				for (int i = 0; i < MAX_Player; ++i) {
-					if (i == 0) {
-						packet.type = SC_PACKET_PLAYER_0;
-					}
-					else
-						packet.type = SC_PACKET_PLAYER_1;
-					packet.position = PLAYER[i].position;
-					packet.hp = PLAYER[i].hp;
-					packet.bullet_damage = PLAYER[i].bullet_damage;
-					packet.attack_speed = PLAYER[i].attack_speed;
-					packet.bomb = PLAYER[i].bomb;
-					//packet.b = PLAYER[i].bullet;
-					SendPacket(client_sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-					printf("[%d] 위치 보냄 x : %d, y = %d\n", packet.type, packet.position.x, packet.position.y);
-				}
-
-				send_time = now;
-			}
-		}
-		//-------------------------------------------------------------------------------------------------------------
 		int retval = recvn(client_sock, (char *)&len, sizeof(int), 0); // 데이터 받기(고정 길이)
 		if (retval == SOCKET_ERROR) {
 			err_display("recv()");
@@ -194,80 +196,98 @@ void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
 	case CS_PACKET_DIR:
 		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
-		printf("[%d] : %d\n", ci, my_packet->dirX);
-		printf("[%d] : %d\n", ci, my_packet->dirY);
+		//printf("[%d] : %d\n", ci, my_packet->dirX);
+		//printf("[%d] : %d\n", ci, my_packet->dirY);
 		switch (my_packet->dirX)
 		{
 		case VK_UP_LEFT:
-			PLAYER[ci].moveX = 0;
+			g_Clients[ci].moveX = 0; //제자리
 			break;
 		case VK_UP_RIGHT:
-			PLAYER[ci].moveX = 0;
+			g_Clients[ci].moveX = 0;
 			break;
 		case VK_DOWN_LEFT:
-			PLAYER[ci].moveX = 2;
+			g_Clients[ci].moveX = 2;
 			break;
 		case VK_DOWN_RIGHT:
-			PLAYER[ci].moveX = 1;
+			g_Clients[ci].moveX = 1;
 			break;
 		}
 		switch (my_packet->dirY)
 		{
 		case VK_UP_UP:
-			PLAYER[ci].moveY = 0;
+			g_Clients[ci].moveY = 0;
 			break;
 		case VK_UP_DOWN:
-			PLAYER[ci].moveY = 0;
+			g_Clients[ci].moveY = 0;
 			break;
 		case VK_DOWN_UP:
-			PLAYER[ci].moveY = 2;
+			g_Clients[ci].moveY = 2;
 			break;
 		case VK_DOWN_DOWN:
-			PLAYER[ci].moveY = 1;
+			g_Clients[ci].moveY = 1;
 			break;
 		}
+		player_move_process(ci);	// 플레이어 이동 처리 함수
+		send_location_packet(ci, ci);	// 보낸 사람에게 자신의 위치를 보내준다.
+		for (int i = 0; i < MAX_Player; ++i) {
+			// 자신의 아이디를 제외한 다른 사람들에게 보낸 사람에 위치를 보내준다.
+			if (i == ci)
+				continue;
+			send_location_packet(i, ci);
+		}
+		break;
+
+	}
+}
+
+void player_move_process(int ci) {
+	// 플레이어 이동
+	switch (g_Clients[ci].moveX) {
+	case 1:
+		g_Clients[ci].position.x += 3;
+		break;
+	case 2:
+		g_Clients[ci].position.x -= 3;
+		break;
+	}
+	switch (g_Clients[ci].moveY) {
+	case 1:
+		g_Clients[ci].position.y += 3;
+		break;
+	case 2:
+		g_Clients[ci].position.y -= 3;
 		break;
 	}
 }
 
-		
-
-DWORD WINAPI Calc_Thread(LPVOID arg) {
-
-	clock_t player_move_timer, now;
-	player_move_timer = clock();
-
-	set_player(PLAYER);
-
-	while (1) {
-		now = clock();
-		if (difftime(now, player_move_timer) >= (clock_t)10) {	// 타이머 구현
-			// 플레이어 이동
-			for (int i = 0; i < MAX_Player; ++i) {
-				switch (PLAYER[i].moveX) {
-				case 1:
-					PLAYER[i].position.x += 3;
-					break;
-				case 2:
-					PLAYER[i].position.x -= 3;
-					break;
-				}
-				switch (PLAYER[i].moveY) {
-				case 1:
-					PLAYER[i].position.y += 3;
-					break;
-				case 2:
-					PLAYER[i].position.y -= 3;
-					break;
-				}
-			}
-
-			player_move_timer = now;
+void send_location_packet(int me, int you) {
+	// 플레이어가 접속을 했을 경우에만 패킷을 보낸다.
+	if (g_Clients[me].connect == true) {
+		sc_packet_location packet;
+		packet.type = SC_PACKET_DIR;
+		if (me != you) {
+			// 상대 위치를 보낸다. 자신한테 보낸다.
+			packet.ci = you;
+			packet.x = g_Clients[you].position.x;
+			packet.y = g_Clients[you].position.y;
+			SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
-
-
+		else {
+			// 자기 자신의 위치를 보낸다.
+			packet.ci = me;
+			packet.x = g_Clients[me].position.x;
+			packet.y = g_Clients[me].position.y;
+			SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
 	}
+}
 
-
-	return 0;
+// me = 받는 플레이어, you는 나간 플레이어, value는 값
+void connect_player(int me, int you, bool value) {
+	sc_packet_connect packet;
+	packet.type = SC_PACKET_CONNECT;
+	packet.no = you;
+	packet.connect = value;
+	SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 }

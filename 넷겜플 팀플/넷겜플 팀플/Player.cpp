@@ -16,22 +16,20 @@ void set_player(Player player[2]) {
 	player[1].position.y = 400;
 }
 
-void draw_player(HDC hdc, Player player[2]) {
+void draw_player(HDC hdc, Player player[2], int ci) {
 	// 플레이어 그리기
-	for (int i = 0; i < 2; ++i) {
-			SetTextColor(hdc, RGB(0, 0, 255));
-			SetBkMode(hdc, TRANSPARENT);
-			switch (player[i].moveY) {
-			case 0:
-				player[i].player_img.Draw(hdc, player[i].position.x, player[i].position.y, 50, 50);
-				break;
-			case 1:
-				player[i].player_down_img.Draw(hdc, player[i].position.x, player[i].position.y, 50, 50);
-				break;
-			case 2:
-				player[i].player_up_img.Draw(hdc, player[i].position.x, player[i].position.y, 50, 50);
-				break;
-		}
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	switch (player[ci].moveY) {
+	case 0:
+		player[ci].player_img.Draw(hdc, player[ci].position.x, player[ci].position.y, 50, 50);
+		break;
+	case 1:
+		player[ci].player_down_img.Draw(hdc, player[ci].position.x, player[ci].position.y, 50, 50);
+		break;
+	case 2:
+		player[ci].player_up_img.Draw(hdc, player[ci].position.x, player[ci].position.y, 50, 50);
+		break;
 	}
 }
 

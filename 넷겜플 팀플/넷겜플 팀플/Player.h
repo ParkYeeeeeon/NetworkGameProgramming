@@ -5,6 +5,9 @@
 #pragma pack(1) 
 struct Player {
 	int packet_type = CS_PACKET_PLAYER;
+	bool connect;	// 연결 여부
+	int dirX = 0;
+	int dirY = 0;
 	bool control;
 	Location position;
 	int hp;
@@ -25,7 +28,7 @@ struct Player {
 #pragma pack()
 
 void set_player(Player player[2]);
-void draw_player(HDC hdc, Player player[2]);
+void draw_player(HDC hdc, Player player[2], int ci);
 void add_player_bullet(Player player[2]);
 void draw_playerbullet(HDC hdc, Player player[2]);
 void add_bullet_position(Player player[2]);

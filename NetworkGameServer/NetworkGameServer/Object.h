@@ -4,6 +4,7 @@
 #include "protocol.h"
 
 struct Player {
+	//SOCKET sock;	// 외부 함수에서 socket 통신을 위하여 가지고 있는다.
 	Location position;
 	int hp;
 	int bullet_damage;
