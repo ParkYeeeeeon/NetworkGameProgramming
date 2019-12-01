@@ -46,13 +46,13 @@ struct Bullet {
 #define SC_PACKET_PLAYER_0 5
 #define SC_PACKET_PLAYER_1 6
 #define SC_PACKET_CONNECT 7
+#define SC_PACKET_TIME 8
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
 	int type;
 	//----------------
-	int dirX;
-	int dirY;
+	int dir;
 };
 
 struct cs_packet_player {
@@ -130,6 +130,12 @@ struct sc_packet_bomb {
 	int type;
 	//----------------
 	bool bombuse;
+};
+
+struct sc_packet_time {
+	int type;
+	//----------------
+	int progress_time;
 };
 
 

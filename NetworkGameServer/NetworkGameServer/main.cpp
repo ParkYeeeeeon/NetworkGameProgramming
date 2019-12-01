@@ -4,8 +4,8 @@
 
 CLIENT g_Clients[MAX_Player];
 SOCKET listen_sock;
+HANDLE tThread;
 
-int new_id = -1;	// 몇 번째 클라이언트 인지 확인 하기 위한 변수
 clock_t send_time;
 
 //Player PLAYER[2];
@@ -45,6 +45,8 @@ void init() {
 	for (int i = 0; i < MAX_Player; ++i)
 		g_Clients[i].connect = false;
 
+	tThread = CreateThread(NULL, 0, Timer_Thread, NULL, 0, NULL);
+
 	printf("Server init Complete..!\n");
 }
 
@@ -53,6 +55,7 @@ void Accept_Thread() {
 	HANDLE hThread;
 	while (1) {
 		// accept()
+		int new_id = -1;	// 몇 번째 클라이언트 인지 확인 하기 위한 변수
 		int addrlen = sizeof(clientaddr);
 		SOCKET client_sock = accept(listen_sock, (SOCKADDR *)&clientaddr, &addrlen);
 		if (client_sock == INVALID_SOCKET) {
@@ -80,6 +83,13 @@ void Accept_Thread() {
 		g_Clients[new_id].cliend_id = new_id;
 		g_Clients[new_id].connect = true;
 		g_Clients[new_id].sock = client_sock;
+		g_Clients[new_id].position.x = 0;
+		if (new_id % 2 == 0) {
+			g_Clients[new_id].position.y = 100;
+		}
+		else {
+			g_Clients[new_id].position.y = 400;
+		}
 		//------------------------------------------------------------------------------------------
 		// 클라이언트 고유번호 보내기
 		sc_packet_cino packet;
@@ -169,7 +179,7 @@ DWORD WINAPI Work_Thread(void* parameter) {
 			break;
 		}
 
-		if (len >= 0) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
+		if (len > 0) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
 			//printf( "Packet Size : %d\n", len );
 
 			char *buf = new char[len];
@@ -196,39 +206,23 @@ void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
 	case CS_PACKET_DIR:
 		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
-		//printf("[%d] : %d\n", ci, my_packet->dirX);
-		//printf("[%d] : %d\n", ci, my_packet->dirY);
-		switch (my_packet->dirX)
-		{
-		case VK_UP_LEFT:
-			g_Clients[ci].moveX = 0; //제자리
-			break;
-		case VK_UP_RIGHT:
-			g_Clients[ci].moveX = 0;
-			break;
-		case VK_DOWN_LEFT:
-			g_Clients[ci].moveX = 2;
-			break;
-		case VK_DOWN_RIGHT:
-			g_Clients[ci].moveX = 1;
-			break;
+
+		if (my_packet->dir == VK_RIGHT) {
+			g_Clients[ci].position.x += 5;
 		}
-		switch (my_packet->dirY)
-		{
-		case VK_UP_UP:
-			g_Clients[ci].moveY = 0;
-			break;
-		case VK_UP_DOWN:
-			g_Clients[ci].moveY = 0;
-			break;
-		case VK_DOWN_UP:
-			g_Clients[ci].moveY = 2;
-			break;
-		case VK_DOWN_DOWN:
-			g_Clients[ci].moveY = 1;
-			break;
+
+		if (my_packet->dir == VK_LEFT) {
+			g_Clients[ci].position.x -= 5;
 		}
-		player_move_process(ci);	// 플레이어 이동 처리 함수
+
+		if (my_packet->dir == VK_DOWN) {
+			g_Clients[ci].position.y += 5;
+		}
+
+		if (my_packet->dir == VK_UP) {
+			g_Clients[ci].position.y -= 5;
+		}
+
 		send_location_packet(ci, ci);	// 보낸 사람에게 자신의 위치를 보내준다.
 		for (int i = 0; i < MAX_Player; ++i) {
 			// 자신의 아이디를 제외한 다른 사람들에게 보낸 사람에 위치를 보내준다.
@@ -238,26 +232,6 @@ void ProcessPacket(int ci, char *packet) {
 		}
 		break;
 
-	}
-}
-
-void player_move_process(int ci) {
-	// 플레이어 이동
-	switch (g_Clients[ci].moveX) {
-	case 1:
-		g_Clients[ci].position.x += 3;
-		break;
-	case 2:
-		g_Clients[ci].position.x -= 3;
-		break;
-	}
-	switch (g_Clients[ci].moveY) {
-	case 1:
-		g_Clients[ci].position.y += 3;
-		break;
-	case 2:
-		g_Clients[ci].position.y -= 3;
-		break;
 	}
 }
 
@@ -290,4 +264,41 @@ void connect_player(int me, int you, bool value) {
 	packet.no = you;
 	packet.connect = value;
 	SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+}
+
+DWORD WINAPI Timer_Thread(void* parameter) {
+	int StartTime;
+	StartTime = GetTickCount();
+	int progress_time=0;
+	while (1) {
+		// 2명이 들어 왔을 경우 시작
+		int new_id = -1;
+		for (int i = 0; i < MAX_Player; ++i) {
+			if (g_Clients[i].connect == false) {
+				new_id = i;
+				break;
+			}
+		}
+
+		// 2명이 모두 들어왔을 경우
+		if (-1 == new_id) {
+			if (GetTickCount() - StartTime >= 1000) {
+				//1초가 지남
+				printf("%d초 경과\t", progress_time);
+				StartTime = GetTickCount();
+				progress_time += 1;
+				for (int i = 0; i < MAX_Player; ++i) {
+					sc_packet_time packet;
+					packet.type = SC_PACKET_TIME;
+					packet.progress_time = progress_time;
+					if (g_Clients[i].connect == true)
+						SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
+
+			}
+		}
+		
+
+	}
+	return 0;
 }

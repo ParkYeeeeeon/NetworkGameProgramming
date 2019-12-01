@@ -53,6 +53,7 @@ void SendPacket( SOCKET sock, void *packet, int packet_size ) {
 	char *buf = new char[packet_size];
 	memcpy( buf, packet, packet_size );
 	retval = send( sock, buf, packet_size, 0 );
+	free(buf);
 	if ( retval == SOCKET_ERROR ) {
 		err_display( "send()" );
 	}

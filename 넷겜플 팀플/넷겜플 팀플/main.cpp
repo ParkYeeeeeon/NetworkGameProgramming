@@ -29,7 +29,7 @@ Player PLAYER[2];
 UI ui;
 CImage mapimg;
 int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
-
+BOOL KeyBuffer[256]{ 0 };
 
 void crash_check();
 
@@ -86,8 +86,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
 
-
-
 	switch (iMessage) {
 	case WM_CREATE:
 		srand((unsigned int)time(NULL));
@@ -113,7 +111,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
 
-		SetTimer(cpy_hwnd, 7, 34, NULL);
+		SetTimer(cpy_hwnd, 7, 50, NULL);
 		break;
 
 
@@ -126,85 +124,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		break;
 
 	case WM_KEYDOWN:
-		switch (wParam)
-		{
-		case VK_UP:
-		{
-			PLAYER[client_no].dirY = VK_DOWN_UP;
-		}
-		break;
-
-		case VK_DOWN:
-		{
-			PLAYER[client_no].dirY = VK_DOWN_DOWN;
-		}
-		break;
-
-		case VK_LEFT:
-		{
-			PLAYER[client_no].dirX = VK_DOWN_LEFT;
-		}
-		break;
-
-		case VK_RIGHT:
-		{
-			PLAYER[client_no].dirX = VK_DOWN_RIGHT;
-		}
-		break;
-
-		case VK_SPACE:
-		{
-			for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME)
-					PLAYER[i].fire = true;
-			}
-			//packet.type = CS_PACKET_DIR;
-			//packet.dir = VK_DOWN_SPACE;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-		}
-		break;
-
-		case VK_ESCAPE:
-			key_input(VK_ESCAPE);
-			break;
-		case 'Q':
-			PostQuitMessage(0);
-			break;
-		}
-		InvalidateRect(hwnd, NULL, false);
+		KeyBuffer[wParam] = TRUE;
 		break;
 
 	case WM_KEYUP:
-		switch (wParam)
-		{
-		case VK_UP:
-			PLAYER[client_no].dirY = VK_UP_UP;
-			break;
-
-		case VK_DOWN:
-			PLAYER[client_no].dirY = VK_UP_DOWN;
-			break;
-
-		case VK_LEFT:
-			PLAYER[client_no].dirX = VK_UP_LEFT;
-			break;
-
-		case VK_RIGHT:
-			PLAYER[client_no].dirX = VK_UP_RIGHT;
-			break;
-
-		case VK_SPACE:
-			for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME)
-					PLAYER[i].fire = false;
-			}
-			//packet.type = CS_PACKET_DIR;
-			//packet.dir = VK_UP_SPACE;
-			//SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			break;
-		}
-		InvalidateRect(hwnd, NULL, false);
+		KeyBuffer[wParam] = FALSE;
 		break;
+
+
 
 	case WM_TIMER:
 		switch (wParam)
@@ -289,15 +216,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		case 7:
 		{
-			cs_packet_dir packet;
-			packet.type = CS_PACKET_DIR;
-			packet.dirX = PLAYER[client_no].dirX;
-			packet.dirY = PLAYER[client_no].dirY;
-			//printf("X : %d\n", packet.dirX);
-			//printf("Y : %d\n", packet.dirY);
-			SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			PLAYER[client_no].dirX = 0;
-			PLAYER[client_no].dirY = 0;
+			//printf("%d, %d, %d, %d\n", KeyBuffer[VK_LEFT], KeyBuffer[VK_RIGHT], KeyBuffer[VK_UP], KeyBuffer[VK_DOWN]);
+			if (KeyBuffer[VK_LEFT] != 0)
+			{
+				cs_packet_dir packet;
+				packet.type = CS_PACKET_DIR;
+				packet.dir = VK_LEFT;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+
+			if (KeyBuffer[VK_RIGHT] != 0)
+			{
+				cs_packet_dir packet;
+				packet.type = CS_PACKET_DIR;
+				packet.dir = VK_RIGHT;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+
+			if (KeyBuffer[VK_UP] != 0)
+			{
+				cs_packet_dir packet;
+				packet.type = CS_PACKET_DIR;
+				packet.dir = VK_UP;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+
+			if (KeyBuffer[VK_DOWN] != 0)
+			{
+				cs_packet_dir packet;
+				packet.type = CS_PACKET_DIR;
+				packet.dir = VK_DOWN;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+
+			
 		}
 		break;
 
@@ -456,8 +408,8 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			break;
 		}
 
-		if (len >= 0) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
-			//printf("Packet Size : %d\n", len);
+		if (len > 0 && len < 100) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
+			printf("Packet Size : %d\n", len);
 
 			char *buf = new char[len];
 			retval = recvn(client_sock, buf, len, 0); // 데이터 받기(가변 길이)
@@ -466,9 +418,9 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 				err_display((char *)"recv()");
 				break;
 			}
-			//buf[retval] = '\0';
-			//printf("Packet 0번째 : %d\n", buf[0]);
-			ProcessPacket(0, buf);
+			buf[retval] = '\0';
+			printf("Packet 0번째 : %d\n", buf[0]);
+			ProcessPacket(client_no, buf);
 
 		}
 
@@ -493,6 +445,7 @@ void ProcessPacket(int ci, char *packet) {
 	{
 		sc_packet_location *my_packet;
 		my_packet = reinterpret_cast<sc_packet_location *>(packet);
+		printf("[%d] %d, %d\n", my_packet->ci, my_packet->x, my_packet->y);
 		PLAYER[my_packet->ci].position.x = my_packet->x;
 		PLAYER[my_packet->ci].position.y = my_packet->y;
 	}
@@ -503,6 +456,14 @@ void ProcessPacket(int ci, char *packet) {
 		sc_packet_connect *my_packet;
 		my_packet = reinterpret_cast<sc_packet_connect *>(packet);
 		PLAYER[my_packet->no].connect = my_packet->connect;
+	}
+	break;
+
+	case SC_PACKET_TIME:
+	{
+		sc_packet_time *my_packet;
+		my_packet = reinterpret_cast<sc_packet_time *>(packet);
+		printf("%d초 경과\t", my_packet->progress_time);
 	}
 	break;
 
