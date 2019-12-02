@@ -28,8 +28,11 @@ HANDLE hThread;
 Player PLAYER[2];
 UI ui;
 CImage mapimg;
+CImage num_image[10]; // 숫자 이미지
 int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
+int num; // 숫자 표시를 위한 배열
+
 
 void crash_check();
 
@@ -95,6 +98,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		GetClientRect(hwnd, &rt);
 
 		set_player(PLAYER);
+		set_number();
 		mapimg.Load("Image\\Map\\Background.png");
 
 
@@ -276,6 +280,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_map(mem0dc, mapimg);
+	
 
 		draw_enemy(mem0dc);
 		for (int i = 0; i < LIMIT_PLAYER; ++i) {
@@ -290,6 +295,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
 		draw_ui(mem0dc, ui);
+		draw_number(mem0dc, 0,300,300);
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
@@ -468,4 +474,27 @@ void ProcessPacket(int ci, char *packet) {
 	break;
 
 	}
+}
+
+void set_number() {
+	
+	char buffer[100] = { 0, };
+	
+	for (int i = 0; i < 10; i++)
+	{
+
+		sprintf(buffer, "Image\\UI\\num%d.png", i);
+		num_image[i].Load(buffer);
+		printf(buffer);
+		
+	}
+
+}
+
+void draw_number(HDC hdc, int num, int x, int y) {
+	// 숫자 그리기
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+
+	num_image[num].Draw(hdc, x, y, 50, 50);
 }
