@@ -56,7 +56,7 @@ void key_input(int key);
 void init_ui(UI& ui);
 void draw_ui(HDC hdc, UI& ui);
 void draw_map(HDC hdc, CImage& mapimg);
-void draw_number(HDC hdc, int num);
+void draw_number(HDC hdc, int num, int x, int y);
 void set_number();
 void Connect();
 void Recv_Packet();

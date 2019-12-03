@@ -208,19 +208,19 @@ void ProcessPacket(int ci, char *packet) {
 		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 
 		if (my_packet->dir == VK_RIGHT) {
-			g_Clients[ci].position.x += 5;
+			g_Clients[ci].position.x += 10;
 		}
 
 		if (my_packet->dir == VK_LEFT) {
-			g_Clients[ci].position.x -= 5;
+			g_Clients[ci].position.x -= 10;
 		}
 
 		if (my_packet->dir == VK_DOWN) {
-			g_Clients[ci].position.y += 5;
+			g_Clients[ci].position.y += 10;
 		}
 
 		if (my_packet->dir == VK_UP) {
-			g_Clients[ci].position.y -= 5;
+			g_Clients[ci].position.y -= 10;
 		}
 
 		send_location_packet(ci, ci);	// 보낸 사람에게 자신의 위치를 보내준다.

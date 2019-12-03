@@ -115,7 +115,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
 		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
 
-		SetTimer(cpy_hwnd, 7, 50, NULL);
+		SetTimer(cpy_hwnd, 7, 17, NULL);
 		break;
 
 
