@@ -12,6 +12,7 @@
 #define CS_PACKET_BOSS 3
 #define CS_PACKET_GAMESTATE 4
 #define CS_PACKET_DIR 5
+#define CS_PACKET_ATTACK 6
 
 #define VK_UP_UP 100
 #define VK_DOWN_UP 101
@@ -33,7 +34,7 @@
 #define SC_PACKET_PLAYER_1 6
 #define SC_PACKET_CONNECT 7
 #define SC_PACKET_TIME 8
-
+#define SC_PACKET_BULLET 9
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -84,6 +85,13 @@ struct cs_packet_gamestate {
 
 };
 
+struct cs_packet_attack {
+	int type;
+	//----------------
+	bool attack;
+	int damage;
+};
+
 struct sc_packet_cino {
 	int type;
 	//----------------
@@ -124,7 +132,11 @@ struct sc_packet_time {
 	int progress_time;
 };
 
-
+struct sc_packet_bullet {
+	int type;
+	//----------------
+	Bullet bullet_array[2][200];
+};
 
 
 #endif

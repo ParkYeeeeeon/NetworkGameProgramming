@@ -3,6 +3,12 @@
 
 #include "protocol.h"
 
+#define PLAYER_SIZE 50
+#define PLAYER_BULLET_SIZE 20
+#define MONSTER_SIZE_X 20   
+#define MONSTER_SIZE_Y 16
+#define MONSTER_BULLET_SIZE 50
+
 struct Player {
 	//SOCKET sock;	// 외부 함수에서 socket 통신을 위하여 가지고 있는다.
 	Location position;
@@ -11,9 +17,9 @@ struct Player {
 	int attack_speed;
 	int bomb;
 	std::vector<Bullet> bullet;
-	bool fire = false;	// 총알 쐈는가 (space바를 눌렀는가)
 	bool skil_activate;
 
+	bool fire = false;	// 총알 쐈는가 (space바를 눌렀는가)
 	int moveX = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 	int moveY = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 };
@@ -50,6 +56,8 @@ struct UI {					   // 0 : 플레이어1 , 1: 플레이어2
 };
 
 void set_player(Player player[2]);
-void add_player_bullet(Player player[2]);
-void add_bullet_position(Player player[2]);
+
+//void add_player_bullet(CLIENT player[2]);
+//void add_bullet_position(CLIENT player[2]);
+
 #endif

@@ -4,13 +4,12 @@
 
 CLIENT g_Clients[MAX_Player];
 SOCKET listen_sock;
-HANDLE tThread;
+HANDLE tThread, cThread;
 
 clock_t send_time;
 
-//Player PLAYER[2];
 UI ui;
-
+Bullet Bullet_Send_player[2][200];
 
 int main() {
 	init();
@@ -46,6 +45,7 @@ void init() {
 		g_Clients[i].connect = false;
 
 	tThread = CreateThread(NULL, 0, Timer_Thread, NULL, 0, NULL);
+	cThread = CreateThread(NULL, 0, Calc_Thread, NULL, 0, NULL);
 
 	printf("Server init Complete..!\n");
 }
@@ -158,7 +158,7 @@ void DisconnectClient(int ci) {
 DWORD WINAPI Work_Thread(void* parameter) {
 	int len;						// 데이터 크기
 
-	
+
 	Thread_Parameter* params = (Thread_Parameter*)parameter;
 
 	printf("Thread Client ID : %d\n", params->ci);
@@ -203,24 +203,28 @@ DWORD WINAPI Work_Thread(void* parameter) {
 }
 
 void ProcessPacket(int ci, char *packet) {
+	cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 	switch (packet[0]) {
 	case CS_PACKET_DIR:
-		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 
 		if (my_packet->dir == VK_RIGHT) {
-			g_Clients[ci].position.x += 10;
+			if (g_Clients[ci].position.x < WndX - PLAYER_SIZE - 30)
+				g_Clients[ci].position.x += 10;
 		}
 
 		if (my_packet->dir == VK_LEFT) {
-			g_Clients[ci].position.x -= 10;
+			if (g_Clients[ci].position.x > 0)
+				g_Clients[ci].position.x -= 10;
 		}
 
 		if (my_packet->dir == VK_DOWN) {
-			g_Clients[ci].position.y += 10;
+			if (g_Clients[ci].position.y < WndY - PLAYER_SIZE - 30)
+				g_Clients[ci].position.y += 10;
 		}
 
 		if (my_packet->dir == VK_UP) {
-			g_Clients[ci].position.y -= 10;
+			if (g_Clients[ci].position.y > 0)
+				g_Clients[ci].position.y -= 10;
 		}
 
 		send_location_packet(ci, ci);	// 보낸 사람에게 자신의 위치를 보내준다.
@@ -232,7 +236,28 @@ void ProcessPacket(int ci, char *packet) {
 		}
 		break;
 
+
+	case CS_PACKET_ATTACK:
+		cs_packet_attack *attack_packet = reinterpret_cast<cs_packet_attack *>(packet);
+		g_Clients[ci].Attack = attack_packet->attack;
+		break;
+
 	}
+
+	// 2명이 들어 왔을 경우 시작
+	int new_id = -1;
+	for (int i = 0; i < MAX_Player; ++i) {
+		if (g_Clients[i].connect == false) {
+			new_id = i;
+			break;
+		}
+	}
+
+	// 2명이 모두 들어왔을 경우
+	if (-1 == new_id) {
+		Send_Player_Bullet(ci);
+	}
+
 }
 
 void send_location_packet(int me, int you) {
@@ -269,7 +294,7 @@ void connect_player(int me, int you, bool value) {
 DWORD WINAPI Timer_Thread(void* parameter) {
 	int StartTime;
 	StartTime = GetTickCount();
-	int progress_time=0;
+	int progress_time = 0;
 	while (1) {
 		// 2명이 들어 왔을 경우 시작
 		int new_id = -1;
@@ -297,8 +322,75 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 
 			}
 		}
-		
+
 
 	}
 	return 0;
+}
+
+DWORD WINAPI Calc_Thread(void* parameter) {
+	while (1) {
+		// 2명이 들어 왔을 경우 시작
+		int new_id = -1;
+		for (int i = 0; i < MAX_Player; ++i) {
+			if (g_Clients[i].connect == false) {
+				new_id = i;
+				break;
+			}
+		}
+
+		// 2명이 모두 들어왔을 경우
+		if (-1 == new_id) {
+			// 총알 발사 및 이동
+			add_player_bullet(g_Clients);
+			add_bullet_position(g_Clients);
+
+		}
+
+	}
+	return 0;
+}
+
+void Send_Player_Bullet(int ci) {
+
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 200; ++j) {
+			Bullet_Send_player[i][j].draw = false;
+		}
+	}
+
+	for (int i = 0; i < MAX_Player; ++i) {
+		for (int j = 0; j < g_Clients[i].bullet.size(); ++j) {
+			Bullet_Send_player[i][j] = g_Clients[i].bullet[j];
+			Bullet_Send_player[i][j].draw = true;
+		}
+		sc_packet_bullet packet;
+		packet.type = SC_PACKET_BULLET;
+		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+	}
+
+}
+
+
+void add_bullet_position(CLIENT player[2]) {
+	for (int i = 0; i < 2; ++i) {
+		if (player[i].bullet.size() > 0)
+			for (std::vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j) {
+				j->position.x += 10;
+			}
+	}
+}
+
+void add_player_bullet(CLIENT player[2]) {
+	for (int i = 0; i < 2; ++i) {
+		if (player[i].Attack == true) {
+			Bullet tmp;
+			tmp.position.x = player[i].position.x + 55;
+			tmp.position.y = player[i].position.y + 20;
+			tmp.type = 5;
+			tmp.dir = 0;
+			tmp.bullet_type = 0;
+			player[i].bullet.emplace_back(tmp);
+		}
+	}
 }

@@ -16,6 +16,7 @@ struct Bullet {
 	int type;			// 어떤 객체의 총알인가
 	int dir;				// 어떤 방향으로 갈지
 	int bullet_type;	// 총알 그리기 타입
+	bool draw;			// 화면에 그릴지말지
 };
 // 기본 구조체 [서버에서는 제거]
 
@@ -47,6 +48,7 @@ struct Bullet {
 #define SC_PACKET_PLAYER_1 6
 #define SC_PACKET_CONNECT 7
 #define SC_PACKET_TIME 8
+#define SC_PACKET_BULLET 9;
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -63,7 +65,7 @@ struct cs_packet_player {
 	int bullet_damage;
 	float attack_speed;
 	int bomb;
-	std::vector<Bullet> b;
+	//std::vector<Bullet> b;
 };
 
 struct cs_packet_enemy {
@@ -96,6 +98,13 @@ struct cs_packet_gamestate {
 	int activated_thread;
 
 
+};
+
+struct cs_packet_attack {
+	int type;
+	//----------------
+	bool attack;
+	int damage;
 };
 
 struct sc_packet_cino {
@@ -138,7 +147,11 @@ struct sc_packet_time {
 	int progress_time;
 };
 
-
+struct sc_packet_bullet {
+	int type;
+	//----------------
+	Bullet bullet_array[2][200];
+};
 
 
 #endif

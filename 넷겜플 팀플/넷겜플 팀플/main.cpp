@@ -33,6 +33,7 @@ int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
 int num; // 숫자 표시를 위한 배열
 
+Bullet Bullet_Recv_player[2][200];
 
 void crash_check();
 
@@ -195,13 +196,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}
 
-			add_bullet_position(PLAYER);
+			//add_bullet_position(PLAYER);
 
 			crash_check();
 			break;
 
 		case 6:
-			for (int i = 0; i < 2; ++i) {
+		/*	for (int i = 0; i < 2; ++i) {
 				if (PLAYER[i].control == PLAYER_ME) {
 					if (PLAYER[i].fire == true) {
 						add_player_bullet(PLAYER);
@@ -214,7 +215,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					}
 
 				}
-			}
+			}*/
 
 			break;
 
@@ -253,6 +254,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			}
 
+			if (KeyBuffer[VK_SPACE] != 0) {
+				cs_packet_attack packet;
+				packet.type = CS_PACKET_ATTACK;
+				packet.attack = true;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+			else {
+				cs_packet_attack packet;
+				packet.type = CS_PACKET_ATTACK;
+				packet.attack = false;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
 			
 		}
 		break;
@@ -473,6 +486,21 @@ void ProcessPacket(int ci, char *packet) {
 	}
 	break;
 
+	case SC_PACKET_BULLET:
+		for (int i = 0; i < 2; ++i) {
+			for (int j = 0; j < 200; ++j) {
+				Bullet_Recv_player[i][j].draw = false;
+			}
+		}		
+		sc_packet_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_bullet *>(packet);
+		for (int i = 0; i < 2; ++i) {
+			for (int j = 0; j < 200; ++j) {
+				Bullet_Recv_player[i][j] = my_packet->bullet_array[i][j];
+			}
+		}
+		add_player_bullet(PLAYER, Bullet_Recv_player);
+		break;
 	}
 }
 
