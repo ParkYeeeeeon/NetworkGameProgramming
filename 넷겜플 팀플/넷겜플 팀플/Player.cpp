@@ -33,16 +33,19 @@ void draw_player(HDC hdc, Player player[2], int ci) {
 	}
 }
 
-void add_player_bullet(Player player[2]) {
+void add_player_bullet(Player player[2], Bullet recv_bullet[2][200]) {
 	for (int i = 0; i < 2; ++i) {
-		if (player[i].fire == true) {
-			Bullet tmp;
-			tmp.position.x = player[i].position.x + 55;
-			tmp.position.y = player[i].position.y + 20;
-			tmp.type = 5;
-			tmp.dir = 0;
-			tmp.bullet_type = 0;
-			player[i].bullet.emplace_back(tmp);
+		for (int j = 0; j < 200; ++j) {
+			if (recv_bullet[i][j].draw) {
+				Bullet tmp;
+				tmp.position.x = recv_bullet[i][j].position.x;
+				tmp.position.y = recv_bullet[i][j].position.y;
+				tmp.type = 5;
+				tmp.dir = 0;
+				tmp.dir = true;
+				player[i].bullet.emplace_back(tmp);
+			}
+			
 		}
 	}
 }
@@ -57,10 +60,10 @@ void draw_playerbullet(HDC hdc, Player player[2]) {
 	}
 }
 
-void add_bullet_position(Player player[2]) {
-	for (int i = 0; i < 2; ++i) {
-		for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j) {
-			j->position.x += 10;
-		}
-	}
-}
+//void add_bullet_position(Player player[2]) {
+//	for (int i = 0; i < 2; ++i) {
+//		for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j) {
+//			j->position.x += 10;
+//		}
+//	}
+//}

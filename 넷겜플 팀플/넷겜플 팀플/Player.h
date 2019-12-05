@@ -29,6 +29,6 @@ struct Player {
 
 void set_player(Player player[2]);
 void draw_player(HDC hdc, Player player[2], int ci);
-void add_player_bullet(Player player[2]);
+void add_player_bullet(Player player[2], Bullet recv_bullet[2][200]);
 void draw_playerbullet(HDC hdc, Player player[2]);
-void add_bullet_position(Player player[2]);
+//void add_bullet_position(Player player[2]);
