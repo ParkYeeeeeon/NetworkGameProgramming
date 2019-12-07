@@ -6,10 +6,11 @@ CLIENT g_Clients[MAX_Player];
 SOCKET listen_sock;
 HANDLE tThread, cThread;
 
+bool playGame = true;	// 두명 이상 들어왔는지 판단 여부
+
 clock_t send_time;
 
 UI ui;
-Bullet Bullet_Send_player[2][200];
 
 int main() {
 	init();
@@ -90,6 +91,7 @@ void Accept_Thread() {
 		else {
 			g_Clients[new_id].position.y = 400;
 		}
+		g_Clients[new_id].bullet.reserve(PLAYER_BULLET_LIMIT);		// 총알은 최대 100개까지만 생성 되게 제한
 		//------------------------------------------------------------------------------------------
 		// 클라이언트 고유번호 보내기
 		sc_packet_cino packet;
@@ -203,10 +205,10 @@ DWORD WINAPI Work_Thread(void* parameter) {
 }
 
 void ProcessPacket(int ci, char *packet) {
-	cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 	switch (packet[0]) {
 	case CS_PACKET_DIR:
-
+	{
+		cs_packet_dir *my_packet = reinterpret_cast<cs_packet_dir *>(packet);
 		if (my_packet->dir == VK_RIGHT) {
 			if (g_Clients[ci].position.x < WndX - PLAYER_SIZE - 30)
 				g_Clients[ci].position.x += 10;
@@ -234,163 +236,199 @@ void ProcessPacket(int ci, char *packet) {
 				continue;
 			send_location_packet(i, ci);
 		}
-		break;
+	}
+	break;
 
 
 	case CS_PACKET_ATTACK:
-		cs_packet_attack *attack_packet = reinterpret_cast<cs_packet_attack *>(packet);
-		g_Clients[ci].Attack = attack_packet->attack;
-		break;
+	{
+		// 공격 패킷을 받더라도, 2명이상 들어 왔을 경우에만 처리를 한다.
+		// 0.2초에 한번씩 총알을 생성하게 수정함.
+		if (playGame == true && GetTickCount() - g_Clients[ci].bullet_push_time >= 200) {
 
-	}
-
-	// 2명이 들어 왔을 경우 시작
-	int new_id = -1;
-	for (int i = 0; i < MAX_Player; ++i) {
-		if (g_Clients[i].connect == false) {
-			new_id = i;
-			break;
-		}
-	}
-
-	// 2명이 모두 들어왔을 경우
-	if (-1 == new_id) {
-		Send_Player_Bullet(ci);
-	}
-
-}
-
-void send_location_packet(int me, int you) {
-	// 플레이어가 접속을 했을 경우에만 패킷을 보낸다.
-	if (g_Clients[me].connect == true) {
-		sc_packet_location packet;
-		packet.type = SC_PACKET_DIR;
-		if (me != you) {
-			// 상대 위치를 보낸다. 자신한테 보낸다.
-			packet.ci = you;
-			packet.x = g_Clients[you].position.x;
-			packet.y = g_Clients[you].position.y;
-			SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-		}
-		else {
-			// 자기 자신의 위치를 보낸다.
-			packet.ci = me;
-			packet.x = g_Clients[me].position.x;
-			packet.y = g_Clients[me].position.y;
-			SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-		}
-	}
-}
-
-// me = 받는 플레이어, you는 나간 플레이어, value는 값
-void connect_player(int me, int you, bool value) {
-	sc_packet_connect packet;
-	packet.type = SC_PACKET_CONNECT;
-	packet.no = you;
-	packet.connect = value;
-	SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-}
-
-DWORD WINAPI Timer_Thread(void* parameter) {
-	int StartTime;
-	StartTime = GetTickCount();
-	int progress_time = 0;
-	while (1) {
-		// 2명이 들어 왔을 경우 시작
-		int new_id = -1;
-		for (int i = 0; i < MAX_Player; ++i) {
-			if (g_Clients[i].connect == false) {
-				new_id = i;
+			// Vector의 총알 생성이 PLAYER_BULLET_LIMIT 크거나 같을 경우에는 더이상 생성 하지 않는다.
+			if (g_Clients[ci].bullet.size() >= PLAYER_BULLET_LIMIT)
 				break;
-			}
-		}
+			
+			cs_packet_attack *attack_packet = reinterpret_cast<cs_packet_attack *>(packet);
+			printf("[%d] 총알 생성 %d\t", ci, g_Clients[ci].bullet.size());
 
-		// 2명이 모두 들어왔을 경우
-		if (-1 == new_id) {
-			if (GetTickCount() - StartTime >= 1000) {
-				//1초가 지남
-				printf("%d초 경과\t", progress_time);
-				StartTime = GetTickCount();
-				progress_time += 1;
-				for (int i = 0; i < MAX_Player; ++i) {
-					sc_packet_time packet;
-					packet.type = SC_PACKET_TIME;
-					packet.progress_time = progress_time;
-					if (g_Clients[i].connect == true)
-						SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			// 총알 생성을 위한 플레이어 위치 기록
+			Location temp_location;
+			temp_location.x = g_Clients[ci].position.x + 55;
+			temp_location.y = g_Clients[ci].position.y + 20;
+
+			// Vector에 넣을 총알 생성
+			Bullet bullet;
+			bullet.position = temp_location;		// 총알의 위치는 현재 플레이어의 위치를 넣어준다.
+			bullet.type = 5;	// add_player_bullet 에서 type 5라고 적혀 있어서 5라고 넣음
+			bullet.dir = 0; // 플레이어 객체의 총알 방향은 일자로 나간다면 빈값으로 넣는다.
+			bullet.bullet_type = 0; // 총알 타입도 없을 경우 빈값으로 넣는다.
+			bullet.draw = true;		// 화면에 그려줘야 하므로 true
+			g_Clients[ci].bullet.emplace_back(bullet);	// temp로 만든 bullet를 vector에 넣어준다.
+			g_Clients[ci].bullet_push_time = GetTickCount();	// 현재 시간을 넣어줘서 위에서 1초 뒤에 총알을 넣을 수 있게 방지를 한다.
+
+			// 총알 발사 이후 클라에게 총알 발사 했다고 값을 전송
+			for (int i = 0; i < MAX_Player; ++i) {
+				// 2명이 들어온 이후 부터 총알 발사가 가능하므로, 2명이 접속해 있을 때만 처리를 한다.
+				if (playGame == false)
+					continue;
+				// 접속해 있는 클라이언트 들에게 전송
+				if (g_Clients[i].connect == true) {
+					sc_packet_bullet packet;
+					packet.type = SC_PACKET_BULLET;
+					packet.no = ci;		// 총알 발사자가 누구인지
+					packet.bullet = bullet;	// 해당 총알에 대한 값을 전송
+					SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 				}
 
 			}
+			
 		}
-
-
 	}
-	return 0;
+	break;
+	}
+
+
 }
 
-DWORD WINAPI Calc_Thread(void* parameter) {
-	while (1) {
-		// 2명이 들어 왔을 경우 시작
-		int new_id = -1;
-		for (int i = 0; i < MAX_Player; ++i) {
-			if (g_Clients[i].connect == false) {
-				new_id = i;
-				break;
+	void send_location_packet(int me, int you) {
+		// 플레이어가 접속을 했을 경우에만 패킷을 보낸다.
+		if (g_Clients[me].connect == true) {
+			sc_packet_location packet;
+			packet.type = SC_PACKET_DIR;
+			if (me != you) {
+				// 상대 위치를 보낸다. 자신한테 보낸다.
+				packet.ci = you;
+				packet.x = g_Clients[you].position.x;
+				packet.y = g_Clients[you].position.y;
+				SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+			}
+			else {
+				// 자기 자신의 위치를 보낸다.
+				packet.ci = me;
+				packet.x = g_Clients[me].position.x;
+				packet.y = g_Clients[me].position.y;
+				SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			}
 		}
-
-		// 2명이 모두 들어왔을 경우
-		if (-1 == new_id) {
-			// 총알 발사 및 이동
-			add_player_bullet(g_Clients);
-			add_bullet_position(g_Clients);
-
-		}
-
-	}
-	return 0;
-}
-
-void Send_Player_Bullet(int ci) {
-
-	for (int i = 0; i < 2; ++i) {
-		for (int j = 0; j < 200; ++j) {
-			Bullet_Send_player[i][j].draw = false;
-		}
 	}
 
-	for (int i = 0; i < MAX_Player; ++i) {
-		for (int j = 0; j < g_Clients[i].bullet.size(); ++j) {
-			Bullet_Send_player[i][j] = g_Clients[i].bullet[j];
-			Bullet_Send_player[i][j].draw = true;
-		}
-		sc_packet_bullet packet;
-		packet.type = SC_PACKET_BULLET;
-		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+	// me = 받는 플레이어, you는 나간 플레이어, value는 값
+	void connect_player(int me, int you, bool value) {
+		sc_packet_connect packet;
+		packet.type = SC_PACKET_CONNECT;
+		packet.no = you;
+		packet.connect = value;
+		SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 	}
 
-}
-
-
-void add_bullet_position(CLIENT player[2]) {
-	for (int i = 0; i < 2; ++i) {
-		if (player[i].bullet.size() > 0)
-			for (std::vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j) {
-				j->position.x += 10;
+	DWORD WINAPI Timer_Thread(void* parameter) {
+		int StartTime, bulletTime;
+		StartTime = GetTickCount();
+		bulletTime = GetTickCount();
+		int progress_time = 0;
+		while (1) {
+			// 2명이 들어 왔을 경우 시작
+			int new_id = -1;
+			for (int i = 0; i < MAX_Player; ++i) {
+				if (g_Clients[i].connect == false) {
+					new_id = i;
+					break;
+				}
 			}
-	}
-}
 
-void add_player_bullet(CLIENT player[2]) {
-	for (int i = 0; i < 2; ++i) {
-		if (player[i].Attack == true) {
-			Bullet tmp;
-			tmp.position.x = player[i].position.x + 55;
-			tmp.position.y = player[i].position.y + 20;
-			tmp.type = 5;
-			tmp.dir = 0;
-			tmp.bullet_type = 0;
-			player[i].bullet.emplace_back(tmp);
+			// 2명이 모두 들어왔을 경우
+			if (new_id==-1) {
+				// 2명이 들어왔을 경우 playGame을 True로 변경하여 다른 곳에서는 해당 변수로 2명이 들어온지 판단한다.
+				playGame = true;
+
+				// 서버 전체 시간 관련 타이머 처리 [1초 마다 처리를 한다.]
+				if (GetTickCount() - StartTime >= 1000) {
+					//1초가 지남
+					//printf("%d초 경과\t", progress_time);
+					StartTime = GetTickCount();
+					progress_time += 1;
+					for (int i = 0; i < MAX_Player; ++i) {
+						sc_packet_time packet;
+						packet.type = SC_PACKET_TIME;
+						packet.progress_time = progress_time;
+						if (g_Clients[i].connect == true)
+							SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+					}
+				}
+
+				// 총알 관련한 타이머 처리 [0.05초 마다 처리를 한다.]
+				if (GetTickCount() - bulletTime >= 50) {
+					bulletTime = GetTickCount();
+
+					// 총알 발사 및 이동
+					for (int i = 0; i < MAX_Player; ++i) {
+						// 클라이언트가 접속을 했을 경우에만 처리
+						if (g_Clients[i].connect == true) {
+							//add_player_bullet(g_Clients);	// 이미 Attack Packet에서 생성을 해준다.
+							
+							add_bullet_position(i);
+						}
+					}
+				}
+
+
+			}
+			else {
+				 //2명이 들어오지 않았을 경우 false 처리 한다.
+				playGame = false;
+			}
+
+
+		}
+		return 0;
+	}
+
+	DWORD WINAPI Calc_Thread(void* parameter) {
+		//while (1) {
+		//	// 2명이 모두 들어왔을 경우
+		//	if (playGame == true) {
+		//		// 총알 발사 및 이동
+		//		for (int i = 0; i < MAX_Player; ++i) {
+		//			// 클라이언트가 접속을 했을 경우에만 처리
+		//			if (g_Clients[i].connect == true) {
+		//				//add_player_bullet(g_Clients);	// 이미 Attack Packet에서 생성을 해준다.
+		//				add_bullet_position(i);
+		//			}
+		//		}
+		//	}
+		//}
+		return 0;
+	}
+
+	void add_bullet_position(int ci) {
+		if (g_Clients[ci].bullet.size() > 0) {
+			// Vector 를 순회하며, 총알 위치를 이동 시켜준다.
+			for (std::vector<Bullet>::iterator it = g_Clients[ci].bullet.begin(); it != g_Clients[ci].bullet.end(); ) {
+				// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
+				if (it->position.x >= WndX) {
+					it = g_Clients[ci].bullet.erase(it);
+				}
+				else {
+					// 총알 범위 이동
+					it->position.x += 10;
+					it++;
+				}
+			}
 		}
 	}
-}
+
+	void add_player_bullet(CLIENT player[2]) {
+		for (int i = 0; i < 2; ++i) {
+			if (player[i].Attack == true) {
+				Bullet tmp;
+				tmp.position.x = player[i].position.x + 55;
+				tmp.position.y = player[i].position.y + 20;
+				tmp.type = 5;
+				tmp.dir = 0;
+				tmp.bullet_type = 0;
+				player[i].bullet.emplace_back(tmp);
+			}
+		}
+	}

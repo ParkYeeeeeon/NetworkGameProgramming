@@ -9,6 +9,10 @@
 #define MONSTER_SIZE_Y 16
 #define MONSTER_BULLET_SIZE 50
 
+
+#define PLAYER_BULLET_LIMIT 100
+
+
 struct Player {
 	//SOCKET sock;	// 외부 함수에서 socket 통신을 위하여 가지고 있는다.
 	Location position;

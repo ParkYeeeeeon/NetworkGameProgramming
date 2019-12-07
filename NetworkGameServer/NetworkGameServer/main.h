@@ -23,15 +23,14 @@ struct CLIENT {
 	SOCKET sock;
 	int cliend_id = -1;							// 몇번째 접근한 클라이언트 인지 확인.
 	bool connect = false;						// 서버와 연결을 했는지 확인.
-	//float x = 300, y = 300;						// 캐릭터 좌표 정보
 	int hp = 100;								// 캐릭터 HP 관련 정보
 	bool live = true;							// 인게임중 살아 있는지 확인
 	bool Game_Play = false;						// 게임 플레이 중인지 확인
 	char nickName[16];							// 캐릭터 닉네임
-	Location position;
+	Location position;								// 캐릭터 좌표 정보
 	bool Attack = false;
 	std::vector<Bullet> bullet;
-	// Player PLAYER;
+	int bullet_push_time = 0;		// bullet을 너무 빠른 시간안에 추가 하지 않게 만들기 위해
 };
 
 struct Thread_Parameter {
@@ -53,12 +52,10 @@ DWORD WINAPI Calc_Thread(void* parameter);			// 연산 스레드
 
 void SendPacket( SOCKET sock, void *packet, int packet_size );		// 패킷을 클라에게 보낼때 하는 함수
 void DisconnectClient(int ci);				// 클라이언트 연결이 끊어 졌을 경우 처리 함수
-void player_move_process(int ci);
 void send_location_packet(int me, int you);
 void connect_player(int me, int you, bool value);
 
-void Send_Player_Bullet(int ci);
 void add_player_bullet(CLIENT player[2]);
-void add_bullet_position(CLIENT player[2]);
+void add_bullet_position(int ci);
 
 #endif

@@ -50,6 +50,7 @@ struct Bullet {
 #define SC_PACKET_TIME 8
 #define SC_PACKET_BULLET 9;
 
+
 // 패킷 구조체 정보
 struct cs_packet_dir {
 	int type;
@@ -150,7 +151,8 @@ struct sc_packet_time {
 struct sc_packet_bullet {
 	int type;
 	//----------------
-	Bullet bullet_array[2][200];
+	int no;
+	Bullet bullet;
 };
 
 

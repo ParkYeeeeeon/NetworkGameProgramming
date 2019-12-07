@@ -135,7 +135,8 @@ struct sc_packet_time {
 struct sc_packet_bullet {
 	int type;
 	//----------------
-	Bullet bullet_array[2][200];
+	int no;
+	Bullet bullet;
 };
 
 

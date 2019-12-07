@@ -28,12 +28,12 @@ HANDLE hThread;
 Player PLAYER[2];
 UI ui;
 CImage mapimg;
-CImage num_image[10]; // 숫자 이미지
+CImage num_image[11]; // 숫자 이미지
 int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
 int num; // 숫자 표시를 위한 배열
 
-Bullet Bullet_Recv_player[2][200];
+int total_timer = 0;
 
 void crash_check();
 
@@ -114,7 +114,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 4, 2500, NULL);	// 4번 타이머를 2.5초간(2500) 움직인다
 
 		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
-		SetTimer(cpy_hwnd, 6, 100, NULL);	// 플레이어 총알 타이머
+		SetTimer(cpy_hwnd, 6, 50, NULL);	// 플레이어 총알 타이머
 
 		SetTimer(cpy_hwnd, 7, 17, NULL);
 		break;
@@ -196,27 +196,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				}
 			}
 
-			//add_bullet_position(PLAYER);
-
 			crash_check();
 			break;
 
 		case 6:
-		/*	for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					if (PLAYER[i].fire == true) {
-						add_player_bullet(PLAYER);
-						for (vector<Bullet>::iterator j = PLAYER[i].bullet.begin(); j < PLAYER[i].bullet.end();) {
-							if (j->position.x > WndX)
-								j = PLAYER[i].bullet.erase(j);
-							else
-								++j;
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				// 플레이어가 접속 해 있을 경우에만 처리를 한다.
+				if (PLAYER[i].connect == true) {
+
+					// Vector 를 순회하며, 총알 위치를 이동 시켜준다.
+					for (std::vector<Bullet>::iterator it = PLAYER[i].bullet.begin(); it != PLAYER[i].bullet.end(); ) {
+						// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
+						if (it->position.x >= WndX) {
+							it = PLAYER[i].bullet.erase(it);
+						}
+						else {
+							// 총알 범위 이동
+							it->position.x += 10;
+							it++;
 						}
 					}
-
 				}
-			}*/
-
+			}
 			break;
 
 		case 7:
@@ -258,14 +259,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				cs_packet_attack packet;
 				packet.type = CS_PACKET_ATTACK;
 				packet.attack = true;
+				packet.damage = 10;
 				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			}
-			else {
+			/*else {
 				cs_packet_attack packet;
 				packet.type = CS_PACKET_ATTACK;
 				packet.attack = false;
 				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
+			}*/
 			
 		}
 		break;
@@ -302,13 +304,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				draw_player(mem0dc, PLAYER, i);
 			}
 		}
-		//draw_player(mem0dc, PLAYER, 0);
-		//draw_player(mem0dc, PLAYER, 1);
 		draw_playerbullet(mem0dc, PLAYER);
 		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
 		draw_ui(mem0dc, ui);
-		draw_number(mem0dc, 0,300,300);
+
+		//total_timer
+
+		draw_Timer(mem0dc, total_timer);
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
@@ -439,7 +442,14 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			}
 			buf[retval] = '\0';
 			printf("Packet 0번째 : %d\n", buf[0]);
-			ProcessPacket(client_no, buf);
+			if ((int)buf[0] >= 15) {
+				// 종종 서버에서 패킷이 이상하게 들어 올 가능성 때문에, 특정 패킷 값 이상은 안받는 처리를 한다.
+				// 패킷 숫자가 늘어나면 해당 숫자도 늘려준다.
+				printf("15번째 이상 패킷은 차단 되었습니다..!\n");
+			}
+			else {
+				ProcessPacket(client_no, buf);
+			}
 
 		}
 
@@ -482,39 +492,30 @@ void ProcessPacket(int ci, char *packet) {
 	{
 		sc_packet_time *my_packet;
 		my_packet = reinterpret_cast<sc_packet_time *>(packet);
+		total_timer = my_packet->progress_time;
 		printf("%d초 경과\t", my_packet->progress_time);
 	}
 	break;
 
 	case SC_PACKET_BULLET:
-		for (int i = 0; i < 2; ++i) {
-			for (int j = 0; j < 200; ++j) {
-				Bullet_Recv_player[i][j].draw = false;
-			}
-		}		
+	{
+		// 서버에서 해당 플레이어의 총알 백터를 해당 플레이어에게 데이터를 넣어준다.
 		sc_packet_bullet *my_packet;
 		my_packet = reinterpret_cast<sc_packet_bullet *>(packet);
-		for (int i = 0; i < 2; ++i) {
-			for (int j = 0; j < 200; ++j) {
-				Bullet_Recv_player[i][j] = my_packet->bullet_array[i][j];
-			}
-		}
-		add_player_bullet(PLAYER, Bullet_Recv_player);
+		PLAYER[my_packet->no].bullet.emplace_back(my_packet->bullet);
+	}
 		break;
+
+
 	}
 }
 
 void set_number() {
-	
 	char buffer[100] = { 0, };
-	
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 11; i++)
 	{
-
 		sprintf(buffer, "Image\\UI\\num%d.png", i);
 		num_image[i].Load(buffer);
-		printf(buffer);
-		
 	}
 
 }
@@ -525,4 +526,34 @@ void draw_number(HDC hdc, int num, int x, int y) {
 	SetBkMode(hdc, TRANSPARENT);
 
 	num_image[num].Draw(hdc, x, y, 50, 50);
+}
+
+void draw_Timer(HDC hdc, int time) {
+
+	int hour = time / 3600;
+	time %= 3600;
+	int minute = time / 60;
+	time %= 60;
+
+	// 분 단위가 10을 넘어 갔을 경우
+	if (minute >= 10) {
+		draw_number(hdc, minute/10, 400, 0);
+		draw_number(hdc, minute%10, 450, 0);
+	}
+	else {
+		draw_number(hdc, 0, 400, 0);
+		draw_number(hdc, minute, 450, 0);
+	}
+	
+	draw_number(hdc, 10, 500, 0);
+
+	// 초 단위가 10을 넘어갔을 경우
+	if (time >= 10) {
+		draw_number(hdc, time/10, 550, 0);
+		draw_number(hdc, time%10, 600, 0);
+	}
+	else {
+		draw_number(hdc, 0, 550, 0);
+		draw_number(hdc, time, 600, 0);
+	}
 }

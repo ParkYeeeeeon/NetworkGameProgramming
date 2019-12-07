@@ -52,10 +52,18 @@ void add_player_bullet(Player player[2], Bullet recv_bullet[2][200]) {
 
 void draw_playerbullet(HDC hdc, Player player[2]) {
 	// 플레이어 총알 그리기
-	for (int i = 0; i < 2; ++i) {
-		if (player[i].bullet.size() > 0) {
-			for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j)
-				player[i].bullet_img.Draw(hdc, j->position.x, j->position.y, 20, 20);
+	for (int i = 0; i < LIMIT_PLAYER; ++i) {
+		// 플레이어가 접속 했을 경우에만 처리
+		if (player[i].connect == true) {
+			if (player[i].bullet.size() > 0) {
+
+				for (auto bullet : player[i].bullet) {
+					player[i].bullet_img.Draw(hdc, bullet.position.x, bullet.position.y, 20, 20);
+				}
+
+				//for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j)
+				//	player[i].bullet_img.Draw(hdc, j->position.x, j->position.y, 20, 20);
+			}
 		}
 	}
 }
