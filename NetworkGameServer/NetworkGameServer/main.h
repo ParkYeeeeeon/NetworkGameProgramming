@@ -58,4 +58,9 @@ void connect_player(int me, int you, bool value);
 void add_player_bullet(CLIENT player[2]);
 void add_bullet_position(int ci);
 
+void init_monster();
+void move_monster_location();
+void send_monster_location(int ci);
+
+
 #endif

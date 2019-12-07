@@ -5,6 +5,9 @@
 
 #define PLAYER_SIZE 50
 #define PLAYER_BULLET_SIZE 20
+
+#define MONSTER_COUNT 30
+
 #define MONSTER_SIZE_X 20   
 #define MONSTER_SIZE_Y 16
 #define MONSTER_BULLET_SIZE 50
@@ -12,6 +15,10 @@
 
 #define PLAYER_BULLET_LIMIT 100
 
+#define display_start_x 500 // 출력지점
+#define display_end_x 1500
+#define display_start_y 20
+#define display_end_y 630
 
 struct Player {
 	//SOCKET sock;	// 외부 함수에서 socket 통신을 위하여 가지고 있는다.
@@ -23,17 +30,16 @@ struct Player {
 	std::vector<Bullet> bullet;
 	bool skil_activate;
 
-	bool fire = false;	// 총알 쐈는가 (space바를 눌렀는가)
 	int moveX = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 	int moveY = 0; // 0 : 정지 , 1 : 증가 , 2 : 감소
 };
 
 struct Enemy {
 	Location position;
-	int kind = 0;		// 움직임 최대값
+	int kind = 0;		// 몬스터 종류
 	int ani = 0;
 	int hp;
-	bool alive = true;
+	bool alive = false;
 	int level;
 };
 

@@ -35,6 +35,7 @@
 #define SC_PACKET_CONNECT 7
 #define SC_PACKET_TIME 8
 #define SC_PACKET_BULLET 9
+#define SC_PACKET_MONSTER_LOCATION 10
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -139,5 +140,16 @@ struct sc_packet_bullet {
 	Bullet bullet;
 };
 
+struct sc_packet_monster_location {
+	int type;
+	//----------------
+	int no;	// 몬스터 번호
+	Location position;
+	int kind;		// 몬스터 종류
+	int ani;
+	int hp;
+	bool alive;
+	int level;
+};
 
 #endif

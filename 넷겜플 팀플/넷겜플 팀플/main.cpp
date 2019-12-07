@@ -154,24 +154,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			// 몬스터 위치 변화
 			for (int i = 0; i < MONSTER_COUNT; ++i)
 			{
-				change_enemy_location(0, i);
-				change_enemy_location(1, i);
-				change_enemy_location(2, i);
+				change_enemy_location(monster[i].kind, i);
 			}
 			break;
 
 		case 3:
 			// 몬스터 다시 부활
-			revival_enemy();
+			//revival_enemy();
 			break;
 
 		case 4:
 			// 몬스터 총알 추가 생성
-			for (int i = 0; i < MONSTER_COUNT; i++) {
+			/*for (int i = 0; i < MONSTER_COUNT; i++) {
 				add_enemy_bullet(0, i);
 				add_enemy_bullet(1, i);
 				add_enemy_bullet(2, i);
-			}
+			}*/
 			break;
 
 		case 5:
@@ -268,7 +266,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				packet.attack = false;
 				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 			}*/
-			
+
 		}
 		break;
 
@@ -295,7 +293,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_map(mem0dc, mapimg);
-	
+
 
 		draw_enemy(mem0dc);
 		for (int i = 0; i < LIMIT_PLAYER; ++i) {
@@ -429,28 +427,30 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			err_display((char *)"recv()");
 			break;
 		}
+		//printf("Packet Size : %d\n", len);
+		
+		// 범위 내에 패킷이 아닐경우 클라이언트 오류를 방지 하기 위하여 len을 임시로 고정한다.
+		if (!(len > 0 && len < 100)) {
+			len = 100;
+		}
 
-		if (len > 0 && len < 100) { // 고정 길이가 정상적일 경우만 가변 길이를 받는다.
-			printf("Packet Size : %d\n", len);
-
-			char *buf = new char[len];
-			retval = recvn(client_sock, buf, len, 0); // 데이터 받기(가변 길이)
-			//retval = recv( client_sock, buf, len, 0 );
-			if (retval == SOCKET_ERROR) {
-				err_display((char *)"recv()");
-				break;
-			}
-			buf[retval] = '\0';
-			printf("Packet 0번째 : %d\n", buf[0]);
-			if ((int)buf[0] >= 15) {
-				// 종종 서버에서 패킷이 이상하게 들어 올 가능성 때문에, 특정 패킷 값 이상은 안받는 처리를 한다.
-				// 패킷 숫자가 늘어나면 해당 숫자도 늘려준다.
-				printf("15번째 이상 패킷은 차단 되었습니다..!\n");
-			}
-			else {
-				ProcessPacket(client_no, buf);
-			}
-
+		char *buf = new char[len];
+		retval = recvn(client_sock, buf, len, 0); // 데이터 받기(가변 길이)
+		//retval = recv( client_sock, buf, len, 0 );
+		if (retval == SOCKET_ERROR) {
+			err_display((char *)"recv()");
+			break;
+		}
+		buf[retval] = '\0';
+		//printf("Packet 0번째 : %d\n", buf[0]);
+		if ((int)buf[0] >= 15 || !(len > 0 && len < 100)) {
+			// 고정 길이가 정상적일 경우만 가변 길이를 받는다.
+			// 종종 서버에서 패킷이 이상하게 들어 올 가능성 때문에, 특정 패킷 값 이상은 안받는 처리를 한다.
+			// 패킷 숫자가 늘어나면 해당 숫자도 늘려준다.
+			printf("15번째 이상 패킷은 차단 되었습니다..!\n");
+		}
+		else {
+			ProcessPacket(client_no, buf);
 		}
 
 
@@ -504,7 +504,23 @@ void ProcessPacket(int ci, char *packet) {
 		my_packet = reinterpret_cast<sc_packet_bullet *>(packet);
 		PLAYER[my_packet->no].bullet.emplace_back(my_packet->bullet);
 	}
-		break;
+	break;
+
+	case SC_PACKET_MONSTER_LOCATION:
+	{
+		sc_packet_monster_location *my_packet;
+		my_packet = reinterpret_cast<sc_packet_monster_location *>(packet);
+
+		// 
+		monster[my_packet->no].alive = my_packet->alive;
+		monster[my_packet->no].ani = my_packet->ani;
+		monster[my_packet->no].hp = my_packet->hp;
+		monster[my_packet->no].kind = my_packet->kind;
+		monster[my_packet->no].level = my_packet->level;
+		monster[my_packet->no].position = my_packet->position;
+
+	}
+	break;
 
 
 	}
@@ -537,20 +553,20 @@ void draw_Timer(HDC hdc, int time) {
 
 	// 분 단위가 10을 넘어 갔을 경우
 	if (minute >= 10) {
-		draw_number(hdc, minute/10, 400, 0);
-		draw_number(hdc, minute%10, 450, 0);
+		draw_number(hdc, minute / 10, 400, 0);
+		draw_number(hdc, minute % 10, 450, 0);
 	}
 	else {
 		draw_number(hdc, 0, 400, 0);
 		draw_number(hdc, minute, 450, 0);
 	}
-	
+
 	draw_number(hdc, 10, 500, 0);
 
 	// 초 단위가 10을 넘어갔을 경우
 	if (time >= 10) {
-		draw_number(hdc, time/10, 550, 0);
-		draw_number(hdc, time%10, 600, 0);
+		draw_number(hdc, time / 10, 550, 0);
+		draw_number(hdc, time % 10, 600, 0);
 	}
 	else {
 		draw_number(hdc, 0, 550, 0);
