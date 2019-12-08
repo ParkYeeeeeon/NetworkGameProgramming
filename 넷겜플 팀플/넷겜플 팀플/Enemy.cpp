@@ -45,60 +45,64 @@ void revival_enemy() {
 	//}
 }
 
-void add_enemy_bullet(int monsterKind, int monster_id) {
-	//switch (monsterKind)
-	//{
-	//case 0:
-	//{
-	//	if (mon1[monster_id].alive == true) {
-	//		Bullet tmp_bullet;
-	//		tmp_bullet.position.x = mon1[monster_id].position.x - 20;
-	//		tmp_bullet.position.y = mon1[monster_id].position.y + 20;
-	//		tmp_bullet.type = 0;
-	//		tmp_bullet.dir = 0;
-	//		tmp_bullet.bullet_type = 0;
-	//		bullet.push_back(tmp_bullet);
-	//	}
-	//}
-	//break;
-	//case 1:
-	//{
-	//	if (mon2[monster_id].alive == true) {
-	//		Bullet tmp_bullet;
-	//		tmp_bullet.position.x = mon2[monster_id].position.x - 20;
-	//		tmp_bullet.position.y = mon2[monster_id].position.y;
-	//		tmp_bullet.type = 0;
-	//		tmp_bullet.dir = 0;
-	//		tmp_bullet.bullet_type = 1;
-	//		bullet.push_back(tmp_bullet);
+void add_enemy_bullet() {
+	for (int mi = 0; mi < MONSTER_COUNT; mi++) {
+		// 몬스터가 살아 있을 경우에만 처리 한다.
+		if (monster[mi].alive == false)
+			continue;
 
-	//		tmp_bullet.position.x = mon2[monster_id].position.x - 20;
-	//		tmp_bullet.position.y = mon2[monster_id].position.y + 40;
-	//		tmp_bullet.type = 0;
-	//		tmp_bullet.dir = 0;
-	//		tmp_bullet.bullet_type = 1;
-	//		bullet.push_back(tmp_bullet);
+		switch (monster[mi].kind) {
+		case 0:
+		{
+			Bullet tmp_bullet;
+			tmp_bullet.position.x = monster[mi].position.x - 20;
+			tmp_bullet.position.y = monster[mi].position.y + 20;
+			tmp_bullet.type = 0;
+			tmp_bullet.dir = 0;
+			tmp_bullet.bullet_type = 0;
+			tmp_bullet.dir = 0;
+			bullet.push_back(tmp_bullet);
+		}
+		break;
 
-	//	}
-	//}
-	//break;
-	//case 2:
-	//{
-	//	// mon3이 살아 있을 경우에만 총알을 그린다.
-	//	if (mon3[monster_id].alive == true) {
-	//		for (int i = 0; i < 3; ++i) {
-	//			Bullet tmp_bullet;
-	//			tmp_bullet.position.x = mon3[monster_id].position.x - 20;
-	//			tmp_bullet.position.y = mon3[monster_id].position.y + 20;
-	//			tmp_bullet.type = 0;
-	//			tmp_bullet.bullet_type = 0;
-	//			tmp_bullet.dir = i;	// 직진 // 왼쪽 위로 // 왼쪽 아래
-	//			bullet.push_back(tmp_bullet);
-	//		}
-	//	}
-	//}
-	//break;
-	//}
+		case 1:
+		{
+			Bullet tmp_bullet;
+			tmp_bullet.position.x = monster[mi].position.x - 20;
+			tmp_bullet.position.y = monster[mi].position.y;
+			tmp_bullet.type = 0;
+			tmp_bullet.dir = 0;
+			tmp_bullet.bullet_type = 1;
+			tmp_bullet.dir = 0;
+			bullet.push_back(tmp_bullet);
+
+			tmp_bullet.position.x = monster[mi].position.x - 20;
+			tmp_bullet.position.y = monster[mi].position.y + 40;
+			tmp_bullet.type = 0;
+			tmp_bullet.dir = 0;
+			tmp_bullet.bullet_type = 1;
+			tmp_bullet.dir = 0;
+			bullet.push_back(tmp_bullet);
+		}
+		break;
+
+		case 2:
+		{
+			for (int j = 0; j < 3; ++j) {
+				Bullet tmp_bullet;
+				tmp_bullet.position.x = monster[mi].position.x - 20;
+				tmp_bullet.position.y = monster[mi].position.y + 20;
+				tmp_bullet.type = 0;
+				tmp_bullet.dir = 0;
+				tmp_bullet.bullet_type = 0;
+				tmp_bullet.dir = j;	// 직진 // 왼쪽 위로 // 왼쪽 아래
+				bullet.push_back(tmp_bullet);
+			}
+		}
+		break;
+
+		}
+	}
 }
 
 void init_Monster_Bullet_Image()
@@ -118,8 +122,22 @@ void draw_enemybullet(HDC hdc) {
 			i = bullet.erase(i);
 		}
 		else {
-			change_enemy_bullet(i);
 			Bullet_Draw(hdc, i->position.x, i->position.y, i->type, i->bullet_type);
+			++i;
+		}
+	}
+}
+
+void move_enemybullet() {
+	for (vector<Bullet>::iterator i = bullet.begin(); i < bullet.end();)
+	{
+		// 총알이 영역 밖으로 나갔을 경우 삭제
+		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720)) {
+			// 범위를 벗어나면 삭제를 해준다.
+			i = bullet.erase(i);
+		}
+		else {
+			change_enemy_bullet(i);
 			++i;
 		}
 	}
@@ -140,38 +158,10 @@ void Bullet_Draw(HDC hdc, int x, int y, int Kind, int bullettype) {
 }
 
 void change_enemy_ani(int monsterKind, int monster_id) {
-
-
 	monster[monster_id].ani += 1;
 	if (monster[monster_id].ani >= 4) {
 		monster[monster_id].ani = 0;
 	}
-
-	//switch (monsterKind)
-	//{
-	//case 0:
-	//	// mon1
-	//	mon1[monster_id].ani += 1;
-	//	if (mon1[monster_id].ani >= 4) {
-	//		mon1[monster_id].ani = 0;
-	//	}
-	//	break;
-	//case 1:
-	//	// mon2
-	//	mon2[monster_id].ani += 1;
-	//	if (mon2[monster_id].ani >= 4) {
-	//		mon2[monster_id].ani = 0;
-	//	}
-	//	break;
-	//case 2:
-	//	// mon3
-	//	mon3[monster_id].ani += 1;
-	//	if (mon3[monster_id].ani >= 4) {
-	//		mon3[monster_id].ani = 0;
-	//	}
-	//	break;
-	//}
-
 }
 
 void Monster_Draw(HDC hdc, int x, int y, int Kind, int ani, int hp) {
@@ -227,17 +217,17 @@ void change_enemy_bullet(vector<Bullet>::iterator i) {
 	switch (i->dir) {
 	case 0:
 		// 직진
-		i->position.x -= 1;
+		i->position.x -= 3;
 		break;
 	case 1:
 		// 왼쪽 위로
-		i->position.x -= 1;
-		i->position.y += 1;
+		i->position.x -= 3;
+		i->position.y += 3;
 		break;
 	case 2:
 		// 왼쪽 아래
-		i->position.x -= 1;
-		i->position.y -= 1;
+		i->position.x -= 3;
+		i->position.y -= 3;
 		break;
 	}
 }

@@ -6,7 +6,7 @@
 #define PLAYER_SIZE 50
 #define PLAYER_BULLET_SIZE 20
 
-#define MONSTER_COUNT 30
+#define MONSTER_COUNT 20
 
 #define MONSTER_SIZE_X 20   
 #define MONSTER_SIZE_Y 16

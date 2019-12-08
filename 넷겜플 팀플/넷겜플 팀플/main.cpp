@@ -29,11 +29,12 @@ Player PLAYER[2];
 UI ui;
 CImage mapimg;
 CImage num_image[11]; // 숫자 이미지
-int client_no = 0;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
+int client_no = -1;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
 int num; // 숫자 표시를 위한 배열
 
 int total_timer = 0;
+bool playGame = false;	// 두명 이상 들어왔는지 판단 여부
 
 void crash_check();
 
@@ -110,10 +111,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		// 몬스터 애니메이션 변경 타이머
 		SetTimer(cpy_hwnd, 1, 10000, NULL);	// 1번 타이머를 10초간(10000ms) 움직인다
 		SetTimer(cpy_hwnd, 2, 100, NULL);	// 2번 타이머를 0.1초간(100ms) 움직인다
-		SetTimer(cpy_hwnd, 3, 5000, NULL);	// 3번 타이머를 5초간(5000ms) 움직인다
-		SetTimer(cpy_hwnd, 4, 2500, NULL);	// 4번 타이머를 2.5초간(2500) 움직인다
+		SetTimer(cpy_hwnd, 3, 1, NULL);	// 3번 타이머를 0.001초간(1ms) 움직인다
+		SetTimer(cpy_hwnd, 4, 1000, NULL);	// 4번 타이머를 1초간(1000ms) 움직인다
 
-		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 이동 타이머
+		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 충돌 체크
 		SetTimer(cpy_hwnd, 6, 50, NULL);	// 플레이어 총알 타이머
 
 		SetTimer(cpy_hwnd, 7, 17, NULL);
@@ -143,57 +144,53 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		{
 		case 1:
 			// 몬스터 애니메이션 변화
-			for (int i = 0; i < MONSTER_COUNT; ++i) {
-				change_enemy_ani(0, i);
-				change_enemy_ani(1, i);
-				change_enemy_ani(2, i);
+			if (playGame == true) {
+				for (int i = 0; i < MONSTER_COUNT; ++i) {
+					change_enemy_ani(0, i);
+					change_enemy_ani(1, i);
+					change_enemy_ani(2, i);
+				}
 			}
 			break;
 
 		case 2:
 			// 몬스터 위치 변화
-			for (int i = 0; i < MONSTER_COUNT; ++i)
-			{
-				change_enemy_location(monster[i].kind, i);
+			if (playGame == true) {
+				for (int i = 0; i < MONSTER_COUNT; ++i)
+				{
+					change_enemy_location(monster[i].kind, i);
+				}
 			}
 			break;
 
 		case 3:
-			// 몬스터 다시 부활
-			//revival_enemy();
+			// 총알 움직임 처리
+			move_enemybullet();
 			break;
 
 		case 4:
-			// 몬스터 총알 추가 생성
-			/*for (int i = 0; i < MONSTER_COUNT; i++) {
-				add_enemy_bullet(0, i);
-				add_enemy_bullet(1, i);
-				add_enemy_bullet(2, i);
-			}*/
-			break;
-
-		case 5:
-			for (int i = 0; i < 2; ++i) {
-				if (PLAYER[i].control == PLAYER_ME) {
-					switch (PLAYER[i].moveX) {
-					case 1:
-						PLAYER[i].position.x += 3;
-						break;
-					case 2:
-						PLAYER[i].position.x -= 3;
-						break;
-					}
-					switch (PLAYER[i].moveY) {
-					case 1:
-						PLAYER[i].position.y += 3;
-						break;
-					case 2:
-						PLAYER[i].position.y -= 3;
-						break;
-					}
+		{
+			//--------------------------------------------------------------------------
+			// 모든 플레이어가 들어왔는지 확인 처리
+			int new_id = -1;
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				if (PLAYER[i].connect == false) {
+					new_id = i;
+					break;
 				}
 			}
 
+			if (-1 == new_id) {
+				playGame = true;
+			}
+			else {
+				playGame = false;
+			}
+			//--------------------------------------------------------------------------
+		}
+		break;
+
+		case 5:
 			crash_check();
 			break;
 
@@ -221,52 +218,48 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		case 7:
 		{
 			//printf("%d, %d, %d, %d\n", KeyBuffer[VK_LEFT], KeyBuffer[VK_RIGHT], KeyBuffer[VK_UP], KeyBuffer[VK_DOWN]);
-			if (KeyBuffer[VK_LEFT] != 0)
-			{
-				cs_packet_dir packet;
-				packet.type = CS_PACKET_DIR;
-				packet.dir = VK_LEFT;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
+			if (client_no != -1) {
+				if (KeyBuffer[VK_LEFT] != 0)
+				{
+					cs_packet_dir packet;
+					packet.type = CS_PACKET_DIR;
+					packet.dir = VK_LEFT;
+					SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
 
-			if (KeyBuffer[VK_RIGHT] != 0)
-			{
-				cs_packet_dir packet;
-				packet.type = CS_PACKET_DIR;
-				packet.dir = VK_RIGHT;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
+				if (KeyBuffer[VK_RIGHT] != 0)
+				{
+					cs_packet_dir packet;
+					packet.type = CS_PACKET_DIR;
+					packet.dir = VK_RIGHT;
+					SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
 
-			if (KeyBuffer[VK_UP] != 0)
-			{
-				cs_packet_dir packet;
-				packet.type = CS_PACKET_DIR;
-				packet.dir = VK_UP;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
+				if (KeyBuffer[VK_UP] != 0)
+				{
+					cs_packet_dir packet;
+					packet.type = CS_PACKET_DIR;
+					packet.dir = VK_UP;
+					SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
 
-			if (KeyBuffer[VK_DOWN] != 0)
-			{
-				cs_packet_dir packet;
-				packet.type = CS_PACKET_DIR;
-				packet.dir = VK_DOWN;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
+				if (KeyBuffer[VK_DOWN] != 0)
+				{
+					cs_packet_dir packet;
+					packet.type = CS_PACKET_DIR;
+					packet.dir = VK_DOWN;
+					SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
 
-			if (KeyBuffer[VK_SPACE] != 0) {
-				cs_packet_attack packet;
-				packet.type = CS_PACKET_ATTACK;
-				packet.attack = true;
-				packet.damage = 10;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}
-			/*else {
-				cs_packet_attack packet;
-				packet.type = CS_PACKET_ATTACK;
-				packet.attack = false;
-				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			}*/
+				if (KeyBuffer[VK_SPACE] != 0) {
+					cs_packet_attack packet;
+					packet.type = CS_PACKET_ATTACK;
+					packet.attack = true;
+					packet.damage = 10;
+					SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+				}
 
+			}
 		}
 		break;
 
@@ -294,8 +287,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
 		draw_map(mem0dc, mapimg);
 
-
-		draw_enemy(mem0dc);
+		// 플레이어가 모두 들어 왔을 경우에만 몬스터를 그려준다.
+		if (playGame == true) {
+			draw_enemy(mem0dc);
+			draw_enemybullet(mem0dc);	// 총알을 그린다.
+		}
 		for (int i = 0; i < LIMIT_PLAYER; ++i) {
 			// 플레이어가 접속 했을 때만 그려 준다.
 			if (PLAYER[i].connect == true) {
@@ -303,11 +299,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			}
 		}
 		draw_playerbullet(mem0dc, PLAYER);
-		draw_enemybullet(mem0dc);	// 총알을 그린다.
 		draw_bullet_status(mem0dc);
 		draw_ui(mem0dc, ui);
 
-		//total_timer
 
 		draw_Timer(mem0dc, total_timer);
 
@@ -396,8 +390,13 @@ void init_sock() {
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
-	bool flag = TRUE;
+	bool flag = FALSE;
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag));
+
+	int bsize = (MAX_BUFSIZE * 2);
+	setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char*)&bsize, sizeof(bsize));
+	setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&bsize, sizeof(bsize));
+
 	retval = connect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
 	if (retval == SOCKET_ERROR)
 		err_quit((char *)"connect()");
@@ -412,8 +411,6 @@ void init_sock() {
 }
 
 DWORD WINAPI Read_Thread(LPVOID arg) {
-	int len;						// 데이터 크기
-
 	SOCKET client_sock = (SOCKET)arg;
 	SOCKADDR_IN clientaddr;
 
@@ -422,32 +419,51 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 	getpeername(client_sock, (SOCKADDR *)&clientaddr, &addrlen);
 
 	while (1) {
+		int len; // 데이터 크기
 		int retval = recvn(client_sock, (char *)&len, sizeof(int), 0); // 데이터 받기(고정 길이)
+		//int retval = recv(client_sock, (char *)&len, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display((char *)"recv()");
+			reconnect_socket(client_sock);
 			break;
 		}
 		//printf("Packet Size : %d\n", len);
-		
-		// 범위 내에 패킷이 아닐경우 클라이언트 오류를 방지 하기 위하여 len을 임시로 고정한다.
-		if (!(len > 0 && len < 100)) {
-			len = 100;
-		}
 
-		char *buf = new char[len];
+		char buf[MAX_BUFSIZE]{ 0 };
 		retval = recvn(client_sock, buf, len, 0); // 데이터 받기(가변 길이)
-		//retval = recv( client_sock, buf, len, 0 );
+		//retval = recv(client_sock, buf, len, 0);
 		if (retval == SOCKET_ERROR) {
 			err_display((char *)"recv()");
+			reconnect_socket(client_sock);
 			break;
 		}
 		buf[retval] = '\0';
-		//printf("Packet 0번째 : %d\n", buf[0]);
-		if ((int)buf[0] >= 15 || !(len > 0 && len < 100)) {
+
+		if ((int)buf[0] >= LIMIT_PACKET_CLIENT_NO || (int)buf[0] <= 0) {
+			
+			// 패킷이 정상적으로 들어오지 못할 경우 서버와 Reconnect 처리를 한다.
+			reconnect_socket(client_sock);
+			break;
+
 			// 고정 길이가 정상적일 경우만 가변 길이를 받는다.
 			// 종종 서버에서 패킷이 이상하게 들어 올 가능성 때문에, 특정 패킷 값 이상은 안받는 처리를 한다.
 			// 패킷 숫자가 늘어나면 해당 숫자도 늘려준다.
-			printf("15번째 이상 패킷은 차단 되었습니다..!\n");
+			/*printf("	Packet 동기화 오류...\n");
+			printf("Packet 동기화 오류 0번째 : %d\n", buf[0]);
+			char new_buf[MAX_BUFSIZE]{ 0 };
+			for (int i = 4; i <= len; ++i) {
+				new_buf[i - 4] = buf[i];
+			}
+			printf("	Packet 수정...\n");
+			printf("Packet 수정 0번째 : %d\n", new_buf[0]);
+			if ((int)new_buf[0] >= 15 || (int)new_buf[0] <= 0) {
+				printf("Packet 수정으로도 실패 서버와 다시 연결..!\n");
+
+				
+			}
+			else {
+				ProcessPacket(client_no, new_buf);
+			}*/
 		}
 		else {
 			ProcessPacket(client_no, buf);
@@ -474,7 +490,7 @@ void ProcessPacket(int ci, char *packet) {
 	{
 		sc_packet_location *my_packet;
 		my_packet = reinterpret_cast<sc_packet_location *>(packet);
-		printf("[%d] %d, %d\n", my_packet->ci, my_packet->x, my_packet->y);
+		//printf("[%d] %d, %d\n", my_packet->ci, my_packet->x, my_packet->y);
 		PLAYER[my_packet->ci].position.x = my_packet->x;
 		PLAYER[my_packet->ci].position.y = my_packet->y;
 	}
@@ -493,7 +509,7 @@ void ProcessPacket(int ci, char *packet) {
 		sc_packet_time *my_packet;
 		my_packet = reinterpret_cast<sc_packet_time *>(packet);
 		total_timer = my_packet->progress_time;
-		printf("%d초 경과\t", my_packet->progress_time);
+		//printf("%d초 경과\t", my_packet->progress_time);
 	}
 	break;
 
@@ -511,7 +527,6 @@ void ProcessPacket(int ci, char *packet) {
 		sc_packet_monster_location *my_packet;
 		my_packet = reinterpret_cast<sc_packet_monster_location *>(packet);
 
-		// 
 		monster[my_packet->no].alive = my_packet->alive;
 		monster[my_packet->no].ani = my_packet->ani;
 		monster[my_packet->no].hp = my_packet->hp;
@@ -519,6 +534,12 @@ void ProcessPacket(int ci, char *packet) {
 		monster[my_packet->no].level = my_packet->level;
 		monster[my_packet->no].position = my_packet->position;
 
+	}
+	break;
+
+	case SC_PACKET_MONSTER_BULLET:
+	{
+		add_enemy_bullet();
 	}
 	break;
 
@@ -572,4 +593,26 @@ void draw_Timer(HDC hdc, int time) {
 		draw_number(hdc, 0, 550, 0);
 		draw_number(hdc, time, 600, 0);
 	}
+}
+
+void reconnect_socket(SOCKET &sock) {
+
+	// 서버에다가 끊으라고 패킷을 전송 한다.
+	// cs_packet_dir 을 적은 이유는 결국 type값을 기반으로 처리를 하므로, 아무거나 적은 것 이다.
+	cs_packet_dir packet;
+	packet.type = CS_PACKET_RECONNECT;
+	packet.dir = CS_PACKET_RECONNECT;
+	SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+
+	// 클라이언트 no를 초기화
+	client_no = -1;
+
+	// 스레드를 종료
+	CloseHandle(hThread);
+
+	// 소켓을 종료
+	closesocket(sock);
+
+	// 소켓을 다시 연결 한다.
+	init_sock();
 }

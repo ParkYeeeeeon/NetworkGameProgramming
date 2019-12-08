@@ -15,7 +15,9 @@ using namespace std;
 #define display_start_y 20
 #define display_end_y 630
 
-#define MONSTER_COUNT 30
+#define MAX_BUFSIZE 1024
+
+#define MONSTER_COUNT 20
 
 #define LIMIT_PLAYER 2	// 최대 들어올 수 있는 플레이어 개수
 #define PLAYER_OTHER 0
@@ -73,3 +75,4 @@ int recvn(SOCKET s, char *buf, int len, int flags);		// Recv 받을때 사용 하는 함
 void SendPacket(SOCKET sock, void *packet, int packet_size);		// Packet 전송
 DWORD WINAPI Read_Thread(LPVOID arg);
 void ProcessPacket(int ci, char *packet);
+void reconnect_socket(SOCKET &sock);

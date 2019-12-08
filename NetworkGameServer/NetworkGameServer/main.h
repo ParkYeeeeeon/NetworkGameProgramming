@@ -11,6 +11,7 @@
 #include <Windows.h>
 #include <time.h>
 #include <ctime>
+#include <deque>
 
 #include "Object.h"
 
@@ -18,6 +19,7 @@
 #define MAX_Player 2
 #define WndX 1080	
 #define WndY 720
+#define MAX_BUFSIZE 1024
 
 struct CLIENT {
 	SOCKET sock;
@@ -38,6 +40,14 @@ struct Thread_Parameter {
 	int ci;
 };
 
+struct Packet_Queue {
+	SOCKET sock;
+	//void *packet;
+	char buf[MAX_BUFSIZE]{ 0 };
+	int packet_size;
+};
+
+extern std::deque<Packet_Queue> packet_queue;
 
 void init();														// 소켓 초기화 및 클라이언트 데이터 초기화
 void err_quit( char *msg );									// 소켓 오류시 에러 출력 해주는 함수
@@ -51,6 +61,7 @@ DWORD WINAPI Timer_Thread(void* parameter);					// 타이머 스레드
 DWORD WINAPI Calc_Thread(void* parameter);			// 연산 스레드
 
 void SendPacket( SOCKET sock, void *packet, int packet_size );		// 패킷을 클라에게 보낼때 하는 함수
+void SendPacketQueue();		// Queue에 넣은 패킷을 전송한다.
 void DisconnectClient(int ci);				// 클라이언트 연결이 끊어 졌을 경우 처리 함수
 void send_location_packet(int me, int you);
 void connect_player(int me, int you, bool value);
@@ -61,6 +72,9 @@ void add_bullet_position(int ci);
 void init_monster();
 void move_monster_location();
 void send_monster_location(int ci);
-
-
+void add_enemy_bullet();
+void move_monster_location();
+void move_enemybullet();
+void change_enemy_bullet(std::vector<Bullet>::iterator i);
+void revival_enemy();
 #endif

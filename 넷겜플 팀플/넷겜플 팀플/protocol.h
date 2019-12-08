@@ -13,6 +13,7 @@
 #define CS_PACKET_GAMESTATE 4
 #define CS_PACKET_DIR 5
 #define CS_PACKET_ATTACK 6
+#define CS_PACKET_RECONNECT 7
 
 #define VK_UP_UP 100
 #define VK_DOWN_UP 101
@@ -36,6 +37,12 @@
 #define SC_PACKET_TIME 8
 #define SC_PACKET_BULLET 9
 #define SC_PACKET_MONSTER_LOCATION 10
+#define SC_PACKET_MONSTER_BULLET 11
+
+// [클라이언트, 서버] define숫자에서 +1 을 하여 잘못된 패킷을 방지 하기 위하여 작성
+// 패킷을 하나 추가 할 떄마다 아래 값도 증가를 해줘야 한다.
+#define LIMIT_PACKET_CLIENT_NO 12
+#define LIMIT_PACKET_SERVER_NO 8
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -138,6 +145,12 @@ struct sc_packet_bullet {
 	//----------------
 	int no;
 	Bullet bullet;
+};
+
+struct sc_packet_monster_bullet {
+	int type;
+	//----------------
+	std::vector<Bullet> bullet;
 };
 
 struct sc_packet_monster_location {
