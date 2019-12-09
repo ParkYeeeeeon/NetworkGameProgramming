@@ -77,4 +77,8 @@ void move_monster_location();
 void move_enemybullet();
 void change_enemy_bullet(std::vector<Bullet>::iterator i);
 void revival_enemy();
+
+int get_distance(Location l1, Location l2);
+std::vector<Bullet>::iterator delete_player_bullet(int ci, std::vector<Bullet>::iterator it);
+void crash_check();
 #endif

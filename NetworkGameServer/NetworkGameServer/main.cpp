@@ -350,13 +350,16 @@ void connect_player(int me, int you, bool value) {
 }
 
 DWORD WINAPI Timer_Thread(void* parameter) {
-	int StartTime, bulletTime, monsterTime, monsterSendTime, monsterBullet, monsterBulletMove;
+	int StartTime, bulletTime, monsterTime, monsterSendTime, monsterBullet, monsterBulletMove, crash_check_time, CheckTimer;
 	StartTime = GetTickCount();
 	bulletTime = GetTickCount();
 	monsterTime = GetTickCount();
 	monsterSendTime = GetTickCount();
 	monsterBullet = GetTickCount();
 	monsterBulletMove = GetTickCount();
+	crash_check_time = GetTickCount();
+	CheckTimer = GetTickCount();
+
 	int progress_time = 0;
 	while (1) {
 
@@ -436,7 +439,26 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 				move_enemybullet();
 			}
 
+			// 충돌체크 [ 0.01초마다 처리를 한다. ]
+			if (GetTickCount() - crash_check_time >= 10) {
+				crash_check_time = GetTickCount();
+				if(g_Clients[0].bullet.size() > 0 || g_Clients[1].bullet.size() > 0)
+					crash_check();
+			}
 
+			// 테스트용
+			if (GetTickCount() - CheckTimer >= 250) {
+				CheckTimer = GetTickCount();
+				printf("0플레이어 : %d\n", g_Clients[0].bullet.size());
+				printf("1플레이어 : %d\n", g_Clients[1].bullet.size());
+				/*for (int i = 0; i < MONSTER_COUNT; ++i) {
+					if(monster[i].alive)
+						printf("%d번째 몬스터 살아있음\n",i);
+					else
+						printf("%d번째 몬스터 죽음\n", i);
+				}*/
+			}
+					   
 		}
 		else {
 			//2명이 들어오지 않았을 경우 false 처리 한다.
@@ -465,7 +487,8 @@ void add_bullet_position(int ci) {
 		for (std::vector<Bullet>::iterator it = g_Clients[ci].bullet.begin(); it != g_Clients[ci].bullet.end(); ) {
 			// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
 			if (it->position.x >= WndX) {
-				it = g_Clients[ci].bullet.erase(it);
+				//it = g_Clients[ci].bullet.erase(it);
+				it = delete_player_bullet(ci, it);
 			}
 			else {
 				// 총알 범위 이동
@@ -717,4 +740,70 @@ void revival_enemy() {
 		}
 	}
 
+}
+
+std::vector<Bullet>::iterator delete_player_bullet(int ci, std::vector<Bullet>::iterator it) {
+	int n = 0;	// 매개변수로 넘어온 iterator를 통해 bullet 벡터에서 몇번째 원소인지 체크하기 위한 변수
+
+	for (std::vector<Bullet>::iterator i = g_Clients[ci].bullet.begin(); i != g_Clients[ci].bullet.end();) {	// n의 값을 계산한다.
+		if (it == i) {
+			break;
+		}
+		else
+			n++;
+	}
+
+	it = g_Clients[ci].bullet.erase(it);	// iterator에 해당하는 총알을 지운다.
+
+	sc_packet_delete_player_bullet packet;	// 변경된 내용을 클라이언트에 전송해야한다.
+	packet.type = SC_PACKET_DELETE_PLAYER_BULLET;
+	packet.ci = ci;	// 어떤 플레이어의 총알인지
+	packet.num = n;	// 몇번째 총알인지
+	for (int j = 0; j < MAX_Player; ++j)
+		SendPacket(g_Clients[j].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+
+	return it;
+}
+
+void crash_check() {
+	Location player_center[MAX_Player];
+	Location enemy_center[MONSTER_COUNT];
+	Location player_bullet_center;
+	Location enemy_bullet_center;
+	
+	for (int i = 0; i < MAX_Player; ++i) {
+		player_center[i].x = g_Clients[i].position.x + (PLAYER_SIZE / 2);
+		player_center[i].y = g_Clients[i].position.y + (PLAYER_SIZE / 2);
+	}
+	for (int i = 0; i < MONSTER_COUNT; ++i) {
+		enemy_center[i].x = monster[i].position.x + (MONSTER_SIZE_X / 2);
+		enemy_center[i].y = monster[i].position.y + (MONSTER_SIZE_X / 2);
+	}
+
+	for (int i = 0; i < MAX_Player; ++i) {
+		if (g_Clients[i].bullet.size() > 0) {
+			for (std::vector<Bullet>::iterator it = g_Clients[i].bullet.begin(); it != g_Clients[i].bullet.end();) {
+				bool crash = false;
+				player_bullet_center = it->position;
+				player_bullet_center.x += PLAYER_BULLET_SIZE / 2;
+				player_bullet_center.y += PLAYER_BULLET_SIZE / 2;
+
+				for (int j = 0; j < MONSTER_COUNT; ++j) {
+					if ((PLAYER_BULLET_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_bullet_center, enemy_center[j])) {
+						printf("충돌!\n");
+						crash = true;
+						it = delete_player_bullet(i, it);
+						monster[j].alive = false;
+						break;
+					}
+				}
+				if (!crash)
+					it++;
+			}
+		}
+	}
+}
+
+int get_distance(Location l1, Location l2) {
+	return (int)sqrt(pow((l2.x - l1.x), 2) + pow((l2.y - l1.y), 2));
 }

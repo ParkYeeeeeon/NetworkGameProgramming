@@ -25,6 +25,7 @@ using namespace std;
 
 #define PLAYER_SIZE 50
 #define PLAYER_BULLET_SIZE 20
+
 #define MONSTER_SIZE_X 20   
 #define MONSTER_SIZE_Y 16
 #define MONSTER_BULLET_SIZE 50

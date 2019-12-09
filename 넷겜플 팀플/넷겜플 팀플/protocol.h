@@ -38,11 +38,12 @@
 #define SC_PACKET_BULLET 9
 #define SC_PACKET_MONSTER_LOCATION 10
 #define SC_PACKET_MONSTER_BULLET 11
+#define SC_PACKET_DELETE_PLAYER_BULLET 12
 
 // [클라이언트, 서버] define숫자에서 +1 을 하여 잘못된 패킷을 방지 하기 위하여 작성
 // 패킷을 하나 추가 할 떄마다 아래 값도 증가를 해줘야 한다.
-#define LIMIT_PACKET_CLIENT_NO 12
-#define LIMIT_PACKET_SERVER_NO 8
+#define LIMIT_PACKET_CLIENT_NO 13
+#define LIMIT_PACKET_SERVER_NO 9
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -163,6 +164,13 @@ struct sc_packet_monster_location {
 	int hp;
 	bool alive;
 	int level;
+};
+
+struct sc_packet_delete_player_bullet {
+	int type;
+	//---------------------
+	int ci;  // 어떤 플레이어의 총알을 지울지
+	int num; // bullet 벡터에서 몇번째 원소인지
 };
 
 #endif

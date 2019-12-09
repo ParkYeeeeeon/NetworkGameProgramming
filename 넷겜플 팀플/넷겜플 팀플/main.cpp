@@ -118,6 +118,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 6, 50, NULL);	// 플레이어 총알 타이머
 
 		SetTimer(cpy_hwnd, 7, 17, NULL);
+
+		SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
 		break;
 
 
@@ -201,15 +203,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 					// Vector 를 순회하며, 총알 위치를 이동 시켜준다.
 					for (std::vector<Bullet>::iterator it = PLAYER[i].bullet.begin(); it != PLAYER[i].bullet.end(); ) {
-						// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
-						if (it->position.x >= WndX) {
-							it = PLAYER[i].bullet.erase(it);
-						}
-						else {
+						//// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
+						//if (it->position.x >= WndX) {
+						//	it = PLAYER[i].bullet.erase(it);
+						//}
+						//else {
 							// 총알 범위 이동
 							it->position.x += 10;
 							it++;
-						}
+						//}
 					}
 				}
 			}
@@ -270,8 +272,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			break;
 
 		case 10:
-
-			break;
+		{
+			for (int i = 0; i < 2; ++i) {
+				printf("PLAYER[%d] : %d개\n", i, PLAYER[i].bullet.size());
+			}
+		}
+		break;
 		}
 		InvalidateRect(hwnd, NULL, false);
 		break;
@@ -543,7 +549,14 @@ void ProcessPacket(int ci, char *packet) {
 	}
 	break;
 
-
+	case SC_PACKET_DELETE_PLAYER_BULLET:
+	{
+		int n = 0;
+		sc_packet_delete_player_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_delete_player_bullet *>(packet);
+		PLAYER[my_packet->ci].bullet.erase(PLAYER[my_packet->ci].bullet.begin() + my_packet->num);
+	}
+	break;
 	}
 }
 
