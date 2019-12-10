@@ -14,7 +14,7 @@ struct Player {
 	int bullet_damage;
 	int attack_speed;
 	int bomb;
-	vector<Bullet> bullet;
+	list<Bullet> bullet;
 	bool fire = false;	// ÃÑ¾Ë ½ú´Â°¡ (space¹Ù¸¦ ´­·¶´Â°¡)
 	bool skil_activate;
 	CImage player_img;

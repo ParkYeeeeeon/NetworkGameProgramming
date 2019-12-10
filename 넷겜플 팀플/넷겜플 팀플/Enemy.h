@@ -13,7 +13,7 @@ struct Enemy {
 };
 #pragma pack()
 
-extern vector<Bullet> bullet;
+extern list<Bullet> bullet;
 extern CImage Monster_image[10]; // 몬스터 캐릭터
 extern CImage Monster_bullet[3]; // 몬스터 총알
 extern Enemy monster[MONSTER_COUNT];
@@ -29,7 +29,7 @@ void draw_enemy(HDC hdc);
 void draw_enemybullet(HDC hdc);
 void change_enemy_ani(int monsterKind, int monster_id);
 void change_enemy_location(int monsterkind, int monster_id);
-void change_enemy_bullet(std::vector<Bullet>::iterator i );
+void change_enemy_bullet(std::list<Bullet>::iterator i );
 void add_enemy_bullet();
 void draw_bullet_status(HDC mem0dc);
 void revival_enemy();

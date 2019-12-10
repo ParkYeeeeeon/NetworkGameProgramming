@@ -36,8 +36,6 @@ int num; // 숫자 표시를 위한 배열
 int total_timer = 0;
 bool playGame = false;	// 두명 이상 들어왔는지 판단 여부
 
-void crash_check();
-
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
 {
@@ -114,12 +112,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 3, 1, NULL);	// 3번 타이머를 0.001초간(1ms) 움직인다
 		SetTimer(cpy_hwnd, 4, 1000, NULL);	// 4번 타이머를 1초간(1000ms) 움직인다
 
-		SetTimer(cpy_hwnd, 5, 10, NULL);	// 플레이어 충돌 체크
+		SetTimer(cpy_hwnd, 5, 10, NULL);	// 적 -> 플레이어 충돌 체크
 		SetTimer(cpy_hwnd, 6, 50, NULL);	// 플레이어 총알 타이머
+		SetTimer(cpy_hwnd, 7, 17, NULL);	// 플레이어 키 전송 타이머
+		SetTimer(cpy_hwnd, 8, 10, NULL);	// 플레이어 -> 적 충돌 체크
 
-		SetTimer(cpy_hwnd, 7, 17, NULL);
-
-		SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
+		//SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
 		break;
 
 
@@ -193,25 +191,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		break;
 
 		case 5:
-			crash_check();
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				if (PLAYER[i].connect == true) {
+					for (list<Bullet>::iterator b = bullet.begin(); b != bullet.end();)
+					{
+						// 총알이 안그려지는 경우 넘긴다. [충돌체크 불필요]
+						if (b->draw == false) {
+							++b;
+							continue;
+						}
+
+						if (crash_check(PLAYER[i].position.x, PLAYER[i].position.y, b->position.x, b->position.y, b->bullet_type) == true) {
+							// 충돌 처리
+							b->draw = false;
+						}
+						++b;
+					}
+				}
+			}
 			break;
 
 		case 6:
 			for (int i = 0; i < LIMIT_PLAYER; ++i) {
 				// 플레이어가 접속 해 있을 경우에만 처리를 한다.
 				if (PLAYER[i].connect == true) {
-
 					// Vector 를 순회하며, 총알 위치를 이동 시켜준다.
-					for (std::vector<Bullet>::iterator it = PLAYER[i].bullet.begin(); it != PLAYER[i].bullet.end(); ) {
-						//// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
-						//if (it->position.x >= WndX) {
-						//	it = PLAYER[i].bullet.erase(it);
-						//}
-						//else {
-							// 총알 범위 이동
+					for (std::list<Bullet>::iterator it = PLAYER[i].bullet.begin(); it != PLAYER[i].bullet.end(); ) {
+						// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
+						if (it->position.x >= WndX) {
+							it = PLAYER[i].bullet.erase(it);
+							continue;
+						}
+						else {
+							//총알 범위 이동
 							it->position.x += 10;
 							it++;
-						//}
+						}
 					}
 				}
 			}
@@ -219,7 +234,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 		case 7:
 		{
-			//printf("%d, %d, %d, %d\n", KeyBuffer[VK_LEFT], KeyBuffer[VK_RIGHT], KeyBuffer[VK_UP], KeyBuffer[VK_DOWN]);
 			if (client_no != -1) {
 				if (KeyBuffer[VK_LEFT] != 0)
 				{
@@ -266,18 +280,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		break;
 
 		case 8:
-			break;
+		{
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				if (PLAYER[i].connect == true) {
+					for (list<Bullet>::iterator b = PLAYER[i].bullet.begin(); b != PLAYER[i].bullet.end();)
+					{
+						// 총알이 안그려지는 경우 넘긴다. [충돌체크 불필요]
+						if (b->draw == false) {
+							++b;
+							continue;
+						}
+						for (int j = 0; j < MONSTER_COUNT; ++j) {
+							if (monster[j].alive == false)
+								continue;
+
+							if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3) == true) {
+								// 충돌 처리
+								b->draw = false;
+								monster[j].alive = false;
+							}
+						}
+						++b;
+					}
+				}
+			}
+		}
+		break;
 
 		case 9:
 			break;
 
 		case 10:
-		{
-			for (int i = 0; i < 2; ++i) {
-				printf("PLAYER[%d] : %d개\n", i, PLAYER[i].bullet.size());
-			}
-		}
-		break;
+			break;
 		}
 		InvalidateRect(hwnd, NULL, false);
 		break;
@@ -301,6 +335,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		for (int i = 0; i < LIMIT_PLAYER; ++i) {
 			// 플레이어가 접속 했을 때만 그려 준다.
 			if (PLAYER[i].connect == true) {
+				// 충돌체크 사각형
+				//Rectangle(mem0dc, PLAYER[i].position.x, PLAYER[i].position.y, PLAYER[i].position.x + 50, PLAYER[i].position.y + 50);
 				draw_player(mem0dc, PLAYER, i);
 			}
 		}
@@ -330,51 +366,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 }
 
 
-void crash_check() {
-	if (PLAYER[client_no].connect == true) {
+bool crash_check(int myX, int myY, int uX, int uY, int uType) {
+	// 플레이어 0번만 충돌체크 처리 테스트
+	int mRight, mLeft, mBottom, mTop, uRight, uLeft, uBottom, uTop;
+	mRight = myX + 50;
+	mLeft = myX;
+	mBottom = myY + 50;
+	mTop = myY;
 
-		Location player_center = PLAYER[client_no].position;
-		player_center.x += PLAYER_SIZE / 2;
-		player_center.y += PLAYER_SIZE / 2;
-
-		for (vector<Bullet>::iterator j = bullet.begin(); j < bullet.end();) {
-			Location bullet_center = j->position;
-			bullet_center.x += MONSTER_BULLET_SIZE / 2;
-			bullet_center.y += MONSTER_BULLET_SIZE / 2;
-			if ((PLAYER_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_center, bullet_center)) {
-				j = bullet.erase(j);
-				PLAYER[client_no].hp--;
-				if (ui.hp[client_no] != 0)
-					ui.hp[client_no]--;
-			}
-			else
-				++j;
-		}
-
+	switch (uType) {
+	case 0:
+		uRight = uX + 10;
+		uBottom = uY + 10;
+		break;
+	case 1:
+		uRight = uX + 20;
+		uBottom = uY + 10;
+		break;
+	case 2:
+		uRight = uX + 10;
+		uBottom = uY + 10;
+		break;
+	case 3:
+		uRight = uX + 20;
+		uBottom = uY + 20;
+		break;
 	}
+	uLeft = uX;
+	uTop = uY;
 
-
-	/*for (int i = 0; i < 2; ++i) {
-		if (PLAYER[i].control == PLAYER_ME) {
-			Location player_center = PLAYER[i].position;
-			player_center.x += PLAYER_SIZE / 2;
-			player_center.y += PLAYER_SIZE / 2;
-
-			for (vector<Bullet>::iterator j = bullet.begin(); j < bullet.end();) {
-				Location bullet_center = j->position;
-				bullet_center.x += MONSTER_BULLET_SIZE / 2;
-				bullet_center.y += MONSTER_BULLET_SIZE / 2;
-				if ((PLAYER_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_center, bullet_center)) {
-					j = bullet.erase(j);
-					PLAYER[i].hp--;
-					if (ui.hp[i] != 0)
-						ui.hp[i]--;
-				}
-				else
-					++j;
-			}
-		}
-	}*/
+	if (mRight >= uLeft && mBottom > uTop && mLeft <= uRight && mTop < uBottom)
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 void init_sock() {
@@ -446,7 +473,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 		buf[retval] = '\0';
 
 		if ((int)buf[0] >= LIMIT_PACKET_CLIENT_NO || (int)buf[0] <= 0) {
-			
+
 			// 패킷이 정상적으로 들어오지 못할 경우 서버와 Reconnect 처리를 한다.
 			reconnect_socket(client_sock);
 			break;
@@ -465,7 +492,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 			if ((int)new_buf[0] >= 15 || (int)new_buf[0] <= 0) {
 				printf("Packet 수정으로도 실패 서버와 다시 연결..!\n");
 
-				
+
 			}
 			else {
 				ProcessPacket(client_no, new_buf);
@@ -507,6 +534,7 @@ void ProcessPacket(int ci, char *packet) {
 		sc_packet_connect *my_packet;
 		my_packet = reinterpret_cast<sc_packet_connect *>(packet);
 		PLAYER[my_packet->no].connect = my_packet->connect;
+		PLAYER[my_packet->no].hp = my_packet->hp;
 	}
 	break;
 
@@ -549,14 +577,24 @@ void ProcessPacket(int ci, char *packet) {
 	}
 	break;
 
-	case SC_PACKET_DELETE_PLAYER_BULLET:
+	case SC_PACKET_CRASH_PLAYER_BULLET:
 	{
-		int n = 0;
-		sc_packet_delete_player_bullet *my_packet;
-		my_packet = reinterpret_cast<sc_packet_delete_player_bullet *>(packet);
-		PLAYER[my_packet->ci].bullet.erase(PLAYER[my_packet->ci].bullet.begin() + my_packet->num);
+		sc_packet_crash_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_crash_bullet *>(packet);
+		// 플레이어 hp 를 줄인다.
+		PLAYER[my_packet->ci].hp = my_packet->hp;
 	}
 	break;
+
+	case SC_PACKET_CRASH_MONSTER_BULLET:
+	{
+		// 해당 몬스터의 alive를 false로 변경 해준다.
+		sc_packet_crash_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_crash_bullet *>(packet);
+		monster[my_packet->ci].alive = false;
+	}
+	break;
+
 	}
 }
 

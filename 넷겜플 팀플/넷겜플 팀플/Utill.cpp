@@ -29,10 +29,6 @@ void init_ui(UI& ui) {
 		ui.bomb_position[i].y = 70 + (i * 550);
 	}
 
-	for (int i = 0; i < 3; ++i) {
-
-	}
-
 	ui.time_position.x = 540;
 	ui.time_position.y = 50;
 }

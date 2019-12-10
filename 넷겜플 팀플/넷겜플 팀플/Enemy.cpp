@@ -3,7 +3,7 @@
 CImage Monster_image[10];
 CImage Monster_bullet[3]; // 몬스터 총알
 Enemy monster[MONSTER_COUNT];
-vector<Bullet> bullet;
+list<Bullet> bullet;
 
 void init_Monster_Image() {
 	Monster_image[0].Load("Image\\Monster\\미니몬스터1.png");
@@ -108,14 +108,16 @@ void add_enemy_bullet() {
 void init_Monster_Bullet_Image()
 {
 	Monster_bullet[0].Load("Image\\Monster\\적총알기본.png");
-	// 총알 vector를 미리 200개 할당 해놓는다.
-	// 만약 200개 이상일 경우 숫자를 더 늘려줘야지, 나중에 문제가 생기지 않는다.
-	bullet.reserve(100000);
+
 }
 
 void draw_enemybullet(HDC hdc) {
-	for (vector<Bullet>::iterator i = bullet.begin(); i < bullet.end();)
+	for (list<Bullet>::iterator i = bullet.begin(); i != bullet.end();)
 	{
+		if (i->draw == false) {
+			i = bullet.erase(i);
+			continue;
+		}
 		// 총알이 영역 밖으로 나갔을 경우 삭제
 		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720)) {
 			// 범위를 벗어나면 삭제를 해준다.
@@ -129,10 +131,10 @@ void draw_enemybullet(HDC hdc) {
 }
 
 void move_enemybullet() {
-	for (vector<Bullet>::iterator i = bullet.begin(); i < bullet.end();)
+	for (list<Bullet>::iterator i = bullet.begin(); i != bullet.end();)
 	{
 		// 총알이 영역 밖으로 나갔을 경우 삭제
-		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720)) {
+		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720) || i->draw == false) {
 			// 범위를 벗어나면 삭제를 해준다.
 			i = bullet.erase(i);
 		}
@@ -211,7 +213,7 @@ void draw_bullet_status(HDC mem0dc) {
 	TextOut(mem0dc, 0, 0, isDebugData, strlen(isDebugData));
 }
 
-void change_enemy_bullet(vector<Bullet>::iterator i) {
+void change_enemy_bullet(list<Bullet>::iterator i) {
 	// 적 총알 그리기
 		// 왼쪽 아래
 	switch (i->dir) {

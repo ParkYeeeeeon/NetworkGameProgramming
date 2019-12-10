@@ -5,7 +5,7 @@
 CLIENT g_Clients[MAX_Player];
 
 Enemy monster[MONSTER_COUNT];
-std::vector<Bullet> bullet;
+std::list<Bullet> bullet;
 SOCKET listen_sock;
 HANDLE tThread, cThread;
 
@@ -17,7 +17,6 @@ UI ui;
 
 int main() {
 	init();
-	bullet.reserve(100000);
 	init_monster();
 	std::thread accept_thread{ Accept_Thread };
 	accept_thread.join();
@@ -92,6 +91,7 @@ void Accept_Thread() {
 		g_Clients[new_id].cliend_id = new_id;
 		g_Clients[new_id].connect = true;
 		g_Clients[new_id].sock = client_sock;
+		g_Clients[new_id].hp = 10;
 		g_Clients[new_id].position.x = 0;
 		if (new_id % 2 == 0) {
 			g_Clients[new_id].position.y = 100;
@@ -99,7 +99,6 @@ void Accept_Thread() {
 		else {
 			g_Clients[new_id].position.y = 400;
 		}
-		g_Clients[new_id].bullet.reserve(PLAYER_BULLET_LIMIT);		// 총알은 최대 100개까지만 생성 되게 제한
 		//------------------------------------------------------------------------------------------
 		// 클라이언트 고유번호 보내기
 		sc_packet_cino packet;
@@ -345,20 +344,22 @@ void connect_player(int me, int you, bool value) {
 	sc_packet_connect packet;
 	packet.type = SC_PACKET_CONNECT;
 	packet.no = you;
+	packet.hp = g_Clients[you].hp;
 	packet.connect = value;
 	SendPacket(g_Clients[me].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 }
 
 DWORD WINAPI Timer_Thread(void* parameter) {
-	int StartTime, bulletTime, monsterTime, monsterSendTime, monsterBullet, monsterBulletMove, crash_check_time, CheckTimer;
+	int StartTime, bulletTime, monsterTime, monsterSendTime, monsterBullet, monsterBulletMove, crashcheck_player_time;
+	int crashcheck_monster_time;
 	StartTime = GetTickCount();
 	bulletTime = GetTickCount();
 	monsterTime = GetTickCount();
 	monsterSendTime = GetTickCount();
 	monsterBullet = GetTickCount();
 	monsterBulletMove = GetTickCount();
-	crash_check_time = GetTickCount();
-	CheckTimer = GetTickCount();
+	crashcheck_player_time = GetTickCount();
+	crashcheck_monster_time = GetTickCount();
 
 	int progress_time = 0;
 	while (1) {
@@ -403,8 +404,6 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 				for (int i = 0; i < MAX_Player; ++i) {
 					// 클라이언트가 접속을 했을 경우에만 처리
 					if (g_Clients[i].connect == true) {
-						//add_player_bullet(g_Clients);	// 이미 Attack Packet에서 생성을 해준다.
-
 						add_bullet_position(i);
 					}
 				}
@@ -439,25 +438,62 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 				move_enemybullet();
 			}
 
-			// 충돌체크 [ 0.01초마다 처리를 한다. ]
-			if (GetTickCount() - crash_check_time >= 10) {
-				crash_check_time = GetTickCount();
-				if(g_Clients[0].bullet.size() > 0 || g_Clients[1].bullet.size() > 0)
-					crash_check();
+			 // 적 -> 플레이어 충돌체크 [ 0.01초마다 처리를 한다. ]
+			if (GetTickCount() - crashcheck_player_time >= 10) {
+				crashcheck_player_time = GetTickCount();
+				for (int i = 0; i < MAX_Player; ++i) {
+					if (g_Clients[i].connect == true) {
+						for (std::list<Bullet>::iterator b = bullet.begin(); b != bullet.end();)
+						{
+							if (b->draw == false) {
+								++b;
+								continue;
+							}
+
+							if (crash_check(g_Clients[i].position.x, g_Clients[i].position.y, b->position.x, b->position.y, b->bullet_type) == true) {
+								// 충돌 처리
+								b->draw = false;
+								send_crash_player(i);
+							}
+							++b;
+						}
+					}
+				}
 			}
 
-			// 테스트용
-			if (GetTickCount() - CheckTimer >= 250) {
-				CheckTimer = GetTickCount();
-				printf("0플레이어 : %d\n", g_Clients[0].bullet.size());
-				printf("1플레이어 : %d\n", g_Clients[1].bullet.size());
-				/*for (int i = 0; i < MONSTER_COUNT; ++i) {
-					if(monster[i].alive)
-						printf("%d번째 몬스터 살아있음\n",i);
-					else
-						printf("%d번째 몬스터 죽음\n", i);
-				}*/
+			// 플레이어 -> 적 충돌체크 [ 0.01초마다 처리를 한다. ]
+			if (GetTickCount() - crashcheck_monster_time >= 10) {
+				crashcheck_monster_time = GetTickCount();
+
+				for (int i = 0; i < MAX_Player; ++i) {
+					if (g_Clients[i].connect == true) {
+						for (std::list<Bullet>::iterator b = g_Clients[i].bullet.begin(); b != g_Clients[i].bullet.end();)
+						{
+							// 총알이 안그려지는 경우 넘긴다. [충돌체크 불필요]
+							if (b->draw == false) {
+								++b;
+								continue;
+							}
+							for (int j = 0; j < MONSTER_COUNT; ++j) {
+								if (monster[j].alive == false)
+									continue;
+
+								if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3) == true) {
+									// 충돌 처리
+									b->draw = false;
+									monster[j].alive = false;
+									send_crash_monster(i);
+								}
+							}
+							++b;
+						}
+					}
+				}
+				
 			}
+
+
+			//
 					   
 		}
 		else {
@@ -484,11 +520,11 @@ DWORD WINAPI Calc_Thread(void* parameter) {
 void add_bullet_position(int ci) {
 	if (g_Clients[ci].bullet.size() > 0) {
 		// Vector 를 순회하며, 총알 위치를 이동 시켜준다.
-		for (std::vector<Bullet>::iterator it = g_Clients[ci].bullet.begin(); it != g_Clients[ci].bullet.end(); ) {
+		for (std::list<Bullet>::iterator it = g_Clients[ci].bullet.begin(); it != g_Clients[ci].bullet.end(); ) {
 			// 총알이 범위를 벗어날 경우 삭제 처리를 한다.
-			if (it->position.x >= WndX) {
-				//it = g_Clients[ci].bullet.erase(it);
-				it = delete_player_bullet(ci, it);
+			if (it->position.x >= WndX || it->draw == false) {
+				it = g_Clients[ci].bullet.erase(it);
+				continue;
 			}
 			else {
 				// 총알 범위 이동
@@ -580,16 +616,6 @@ void add_enemy_bullet() {
 			tmp_bullet.bullet_type = 0;
 			tmp_bullet.dir = 0;
 			bullet.push_back(tmp_bullet);
-
-			//for (int i = 0; i < MAX_Player; ++i) {
-			//	if (g_Clients[i].connect == true) {
-			//		sc_packet_bullet packet;
-			//		packet.type = SC_PACKET_MONSTER_BULLET;
-			//		packet.no = mi;		// 총알 발사자가 누구인지
-			//		packet.bullet = tmp_bullet;	// 해당 총알에 대한 값을 전송
-			//		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			//	}
-			//}
 		}
 		break;
 
@@ -604,16 +630,6 @@ void add_enemy_bullet() {
 			tmp_bullet.dir = 0;
 			bullet.push_back(tmp_bullet);
 
-			//for (int i = 0; i < MAX_Player; ++i) {
-			//	if (g_Clients[i].connect == true) {
-			//		sc_packet_bullet packet;
-			//		packet.type = SC_PACKET_MONSTER_BULLET;
-			//		packet.no = mi;		// 총알 발사자가 누구인지
-			//		packet.bullet = tmp_bullet;	// 해당 총알에 대한 값을 전송
-			//		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			//	}
-			//}
-
 			tmp_bullet.position.x = monster[mi].position.x - 20;
 			tmp_bullet.position.y = monster[mi].position.y + 40;
 			tmp_bullet.type = 0;
@@ -621,16 +637,6 @@ void add_enemy_bullet() {
 			tmp_bullet.bullet_type = 1;
 			tmp_bullet.dir = 0;
 			bullet.push_back(tmp_bullet);
-
-			//for (int i = 0; i < MAX_Player; ++i) {
-			//	if (g_Clients[i].connect == true) {
-			//		sc_packet_bullet packet;
-			//		packet.type = SC_PACKET_MONSTER_BULLET;
-			//		packet.no = mi;		// 총알 발사자가 누구인지
-			//		packet.bullet = tmp_bullet;	// 해당 총알에 대한 값을 전송
-			//		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-			//	}
-			//}
 		}
 		break;
 
@@ -645,16 +651,6 @@ void add_enemy_bullet() {
 				tmp_bullet.bullet_type = 0;
 				tmp_bullet.dir = j;	// 직진 // 왼쪽 위로 // 왼쪽 아래
 				bullet.push_back(tmp_bullet);
-
-				//for (int i = 0; i < MAX_Player; ++i) {
-				//	if (g_Clients[i].connect == true) {
-				//		sc_packet_bullet packet;
-				//		packet.type = SC_PACKET_MONSTER_BULLET;
-				//		packet.no = mi;		// 총알 발사자가 누구인지
-				//		packet.bullet = tmp_bullet;	// 해당 총알에 대한 값을 전송
-				//		SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-				//	}
-				//}
 			}
 		}
 		break;
@@ -672,16 +668,17 @@ void add_enemy_bullet() {
 			SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 	}
-
+	
 }
 
 void move_enemybullet() {
-	for (std::vector<Bullet>::iterator i = bullet.begin(); i < bullet.end();)
+	for (std::list<Bullet>::iterator i = bullet.begin(); i != bullet.end(); )
 	{
 		// 총알이 영역 밖으로 나갔을 경우 삭제
-		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720)) {
+		if ((i->position.x <= 0 || i->position.y <= 0 || i->position.y >= 720) || i->draw == false) {
 			// 범위를 벗어나면 삭제를 해준다.
 			i = bullet.erase(i);
+			continue;
 		}
 		else {
 			change_enemy_bullet(i);
@@ -690,7 +687,7 @@ void move_enemybullet() {
 	}
 }
 
-void change_enemy_bullet(std::vector<Bullet>::iterator i) {
+void change_enemy_bullet(std::list<Bullet>::iterator i) {
 	// 적 총알 그리기
 		// 왼쪽 아래
 	switch (i->dir) {
@@ -742,68 +739,68 @@ void revival_enemy() {
 
 }
 
-std::vector<Bullet>::iterator delete_player_bullet(int ci, std::vector<Bullet>::iterator it) {
-	int n = 0;	// 매개변수로 넘어온 iterator를 통해 bullet 벡터에서 몇번째 원소인지 체크하기 위한 변수
+bool crash_check( int myX, int myY, int uX, int uY, int uType) {
+	int mRight, mLeft, mBottom, mTop, uRight, uLeft, uBottom, uTop;
+	// 플레이어 사각형 박스 만들기
+	mRight = myX + 50;
+	mLeft = myX;
+	mBottom = myY + 50;
+	mTop = myY;
 
-	for (std::vector<Bullet>::iterator i = g_Clients[ci].bullet.begin(); i != g_Clients[ci].bullet.end();) {	// n의 값을 계산한다.
-		if (it == i) {
-			break;
-		}
-		else
-			n++;
+	// 총알 사각형 박스 만들기
+	switch (uType) {
+	case 0:
+		uRight = uX + 10;
+		uBottom = uY + 10;
+		break;
+	case 1:
+		uRight = uX + 20;
+		uBottom = uY + 10;
+		break;
+	case 2:
+		uRight = uX + 10;
+		uBottom = uY + 10;
+		break;
+	case 3:
+		uRight = uX + 20;
+		uBottom = uY + 20;
+		break;
 	}
+	uLeft = uX;
+	uTop = uY;
 
-	it = g_Clients[ci].bullet.erase(it);	// iterator에 해당하는 총알을 지운다.
-
-	sc_packet_delete_player_bullet packet;	// 변경된 내용을 클라이언트에 전송해야한다.
-	packet.type = SC_PACKET_DELETE_PLAYER_BULLET;
-	packet.ci = ci;	// 어떤 플레이어의 총알인지
-	packet.num = n;	// 몇번째 총알인지
-	for (int j = 0; j < MAX_Player; ++j)
-		SendPacket(g_Clients[j].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
-
-	return it;
+	// 충돌 체크 확인 하기
+	if (mRight >= uLeft && mBottom > uTop && mLeft <= uRight && mTop < uBottom)
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
 }
-
-void crash_check() {
-	Location player_center[MAX_Player];
-	Location enemy_center[MONSTER_COUNT];
-	Location player_bullet_center;
-	Location enemy_bullet_center;
-	
-	for (int i = 0; i < MAX_Player; ++i) {
-		player_center[i].x = g_Clients[i].position.x + (PLAYER_SIZE / 2);
-		player_center[i].y = g_Clients[i].position.y + (PLAYER_SIZE / 2);
-	}
-	for (int i = 0; i < MONSTER_COUNT; ++i) {
-		enemy_center[i].x = monster[i].position.x + (MONSTER_SIZE_X / 2);
-		enemy_center[i].y = monster[i].position.y + (MONSTER_SIZE_X / 2);
-	}
-
-	for (int i = 0; i < MAX_Player; ++i) {
-		if (g_Clients[i].bullet.size() > 0) {
-			for (std::vector<Bullet>::iterator it = g_Clients[i].bullet.begin(); it != g_Clients[i].bullet.end();) {
-				bool crash = false;
-				player_bullet_center = it->position;
-				player_bullet_center.x += PLAYER_BULLET_SIZE / 2;
-				player_bullet_center.y += PLAYER_BULLET_SIZE / 2;
-
-				for (int j = 0; j < MONSTER_COUNT; ++j) {
-					if ((PLAYER_BULLET_SIZE / 2) + (MONSTER_BULLET_SIZE / 2) > get_distance(player_bullet_center, enemy_center[j])) {
-						printf("충돌!\n");
-						crash = true;
-						it = delete_player_bullet(i, it);
-						monster[j].alive = false;
-						break;
-					}
-				}
-				if (!crash)
-					it++;
-			}
+void send_crash_player(int ci) {
+	g_Clients[ci].hp -= 1;
+	sc_packet_crash_bullet packet;	// 변경된 내용을 클라이언트에 전송해야한다.
+	packet.type = SC_PACKET_CRASH_PLAYER_BULLET;
+	packet.ci = ci;	// 어떤 플레이어 인지
+	packet.hp = g_Clients[ci].hp;
+	for (int j = 0; j < MAX_Player; ++j) {
+		if (g_Clients[j].connect == true) {
+			SendPacket(g_Clients[j].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 	}
 }
 
-int get_distance(Location l1, Location l2) {
-	return (int)sqrt(pow((l2.x - l1.x), 2) + pow((l2.y - l1.y), 2));
+void send_crash_monster(int ci) {
+	monster[ci].alive = false;
+
+	sc_packet_crash_bullet packet;	// 변경된 내용을 클라이언트에 전송해야한다.
+	packet.type = SC_PACKET_CRASH_MONSTER_BULLET;
+	packet.ci = ci;	// 어떤 몬스터 인지
+	packet.hp = 0;
+	for (int j = 0; j < MAX_Player; ++j) {
+		if (g_Clients[j].connect == true) {
+			SendPacket(g_Clients[j].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+	}
 }

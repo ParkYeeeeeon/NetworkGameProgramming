@@ -58,11 +58,11 @@ void draw_playerbullet(HDC hdc, Player player[2]) {
 			if (player[i].bullet.size() > 0) {
 
 				for (auto bullet : player[i].bullet) {
+					if (bullet.draw == false)
+						continue;
+					//Rectangle(hdc, bullet.position.x, bullet.position.y, bullet.position.x + 20, bullet.position.y + 20);
 					player[i].bullet_img.Draw(hdc, bullet.position.x, bullet.position.y, 20, 20);
 				}
-
-				//for (vector<Bullet>::iterator j = player[i].bullet.begin(); j < player[i].bullet.end(); ++j)
-				//	player[i].bullet_img.Draw(hdc, j->position.x, j->position.y, 20, 20);
 			}
 		}
 	}

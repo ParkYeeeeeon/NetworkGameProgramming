@@ -12,6 +12,7 @@
 #include <time.h>
 #include <ctime>
 #include <deque>
+#include <list>
 
 #include "Object.h"
 
@@ -25,13 +26,13 @@ struct CLIENT {
 	SOCKET sock;
 	int cliend_id = -1;							// 몇번째 접근한 클라이언트 인지 확인.
 	bool connect = false;						// 서버와 연결을 했는지 확인.
-	int hp = 100;								// 캐릭터 HP 관련 정보
+	int hp = 10;								// 캐릭터 HP 관련 정보
 	bool live = true;							// 인게임중 살아 있는지 확인
 	bool Game_Play = false;						// 게임 플레이 중인지 확인
 	char nickName[16];							// 캐릭터 닉네임
 	Location position;								// 캐릭터 좌표 정보
 	bool Attack = false;
-	std::vector<Bullet> bullet;
+	std::list<Bullet> bullet;
 	int bullet_push_time = 0;		// bullet을 너무 빠른 시간안에 추가 하지 않게 만들기 위해
 };
 
@@ -75,10 +76,9 @@ void send_monster_location(int ci);
 void add_enemy_bullet();
 void move_monster_location();
 void move_enemybullet();
-void change_enemy_bullet(std::vector<Bullet>::iterator i);
+void change_enemy_bullet(std::list<Bullet>::iterator i);
 void revival_enemy();
-
-int get_distance(Location l1, Location l2);
-std::vector<Bullet>::iterator delete_player_bullet(int ci, std::vector<Bullet>::iterator it);
-void crash_check();
+bool crash_check(int myX, int myY, int uX, int uY, int uType);
+void send_crash_player(int ci);
+void send_crash_monster(int ci);
 #endif

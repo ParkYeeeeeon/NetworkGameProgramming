@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <Windows.h>
 #include <vector>
+#include <list>
 #include <iostream>
 #include <cstdlib> // 랜덤함수를 위한 헤더
 #include <ctime>
@@ -68,6 +69,7 @@ void Recv_Packet();
 void Check_Packet();
 void Send_Packet();
 int get_distance(Location l1, Location l2);
+bool crash_check(int myX, int myY, int uX, int uY, int uType);
 
 void init_sock();
 void err_quit(char *msg);									// 소켓 오류시 에러 출력 해주는 함수
