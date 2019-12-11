@@ -28,6 +28,8 @@ SOCKET sock;
 HANDLE hThread;
 
 Player PLAYER[2];
+skill SKILL;
+
 CImage mainimg;
 CImage startButton;
 CImage readyButton;
@@ -117,6 +119,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		init_Monster_Image();
 		init_Boss_Image();
 		init_ui(ui);
+		set_skill_image(SKILL);
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
 
 		// 몬스터 애니메이션 변경 타이머
@@ -130,7 +133,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 7, 17, NULL);	// 플레이어 키 전송 타이머
 		SetTimer(cpy_hwnd, 8, 10, NULL);	// 플레이어 -> 적 충돌 체크
 
-		//SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
+		SetTimer(cpy_hwnd, 9, 100, NULL);	// 플레이어 스킬 애니메이션 타이머
+
+		SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
 		break;
 
 
@@ -368,10 +373,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		break;
 
 		case 9:
+		{
+			if (PLAYER[0].skil_activate == true) {
+				get_skill_position(PLAYER, SKILL);
+				change_skill_ani(SKILL);
+			}
+		}
 			break;
 
 		case 10:
+		{
+			for (int i = 0; i < 2; ++i) {
+				printf("%d 플레이어 활성화 여부 : %d\n", i, PLAYER[i].skil_activate);
+			}
 			break;
+		}
 		}
 		InvalidateRect(hwnd, NULL, false);
 		break;
@@ -407,15 +423,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			
 			draw_enemy(mem0dc);
 			draw_enemybullet(mem0dc);	// 총알을 그린다.
-
 			
-
+			//SKILL.skill_image.Draw(mem0dc, 0, 0, 200, 200);
 			for (int i = 0; i < LIMIT_PLAYER; ++i) {
 				// 플레이어가 접속 했을 때만 그려 준다.
 				if (PLAYER[i].connect == true) {
 					// 충돌체크 사각형
 					//Rectangle(mem0dc, PLAYER[i].position.x, PLAYER[i].position.y, PLAYER[i].position.x + 50, PLAYER[i].position.y + 50);
-					draw_player(mem0dc, PLAYER, i);
+					draw_player(mem0dc, PLAYER, i, SKILL);
 				}
 			}
 
@@ -742,6 +757,16 @@ void ProcessPacket(int ci, char *packet) {
 	}
 	break;
 
+	case SC_PACKET_SKIIL_ACTIVATE:
+	{
+		sc_packet_skiil_activate *my_packet;
+		my_packet = reinterpret_cast<sc_packet_skiil_activate*>(packet);
+		for (int i = 0; i < 2; ++i) {
+			PLAYER[i].skil_activate = my_packet->ativate;
+		}
+		
+	}
+	break;
 	}
 
 	InvalidateRect(cpy_hwnd, NULL, false);

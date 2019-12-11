@@ -28,8 +28,19 @@ struct Player {
 };
 #pragma pack()
 
+struct skill {
+	CImage skill_image;
+	Location position;
+	int ani = 0;
+};
+
 void set_player(Player player[2]);
-void draw_player(HDC hdc, Player player[2], int ci);
+void draw_player(HDC hdc, Player player[2], int ci, skill sk);
 void add_player_bullet(Player player[2], Bullet recv_bullet[2][200]);
 void draw_playerbullet(HDC hdc, Player player[2]);
 //void add_bullet_position(Player player[2]);
+
+void set_skill_image(skill& sk);
+void get_skill_position(Player p[2], skill& sk);
+void change_skill_ani(skill& sk);
+void draw_skill(HDC hdc, skill sk, int x, int y, int ani);

@@ -228,7 +228,7 @@ void ProcessPacket(int ci, char *packet) {
 		// 클라이언트에서 Ready 버튼을 눌렀을 경우 준비 완료된 상태로 바꾼다.
 		g_Clients[ci].ready = true;
 	}
-		break;
+	break;
 
 	case CS_PACKET_DIR:
 	{
@@ -359,7 +359,7 @@ void connect_player(int me, int you, bool value) {
 
 DWORD WINAPI Timer_Thread(void* parameter) {
 	int StartTime, bulletTime, monsterTime, monsterSendTime, monsterBullet, monsterBulletMove, crashcheck_player_time;
-	int crashcheck_monster_time, bossBulletTime;
+	int crashcheck_monster_time, bossBulletTime, skill_check_time;
 	StartTime = GetTickCount();
 	bulletTime = GetTickCount();
 	monsterTime = GetTickCount();
@@ -369,6 +369,7 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 	crashcheck_player_time = GetTickCount();
 	crashcheck_monster_time = GetTickCount();
 	bossBulletTime = GetTickCount();
+	skill_check_time = GetTickCount();
 
 	int progress_time = 0;
 	int packet_type = 0;
@@ -597,7 +598,24 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 			}
 
 
-			//
+			// 플레이어 스킬 체크 [ 0.01초마다 체크 ]
+			if (GetTickCount() - skill_check_time >= 10) {
+				skill_check_time = GetTickCount();
+				bool Prev = g_Clients[0].skill;
+
+				if (skill_activation() == true) {
+					for (int i = 0; i < MAX_Player; ++i) {
+						g_Clients[i].skill = true;
+					}
+				}
+				else {
+					for (int i = 0; i < MAX_Player; ++i) {
+						g_Clients[i].skill = false;
+					}
+				}
+				if(Prev != g_Clients[0].skill)
+					send_skill_activation();
+			}
 
 		}
 		else {
@@ -666,6 +684,7 @@ void init_monster() {
 		monster[i].level = 1;
 	}
 }
+
 void init_boss() {
 	boss.position.x = 750;
 	boss.position.y = 200;
@@ -996,6 +1015,7 @@ bool crash_check(int myX, int myY, int uX, int uY, int uType, bool isBoss) {
 		return false;
 	}
 }
+
 void send_crash_player(int ci) {
 	g_Clients[ci].hp -= 1;
 	sc_packet_crash_bullet packet;	// 변경된 내용을 클라이언트에 전송해야한다.
@@ -1021,4 +1041,40 @@ void send_crash_monster(int ci) {
 			SendPacket(g_Clients[j].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 	}
+}
+
+bool skill_activation() {
+	Location L1, L2;
+	L1 = g_Clients[0].position;
+	L1.x += PLAYER_SIZE / 2;
+	L1.y += PLAYER_SIZE / 2;
+
+	L2 = g_Clients[1].position;
+	L2.x += PLAYER_SIZE / 2;
+	L2.y += PLAYER_SIZE / 2;
+
+	if (get_distance(L1, L2) <= 400) {
+		printf("스킬 활성화됨!\n");
+		return true;
+	}
+	else {
+		printf("스킬 비활성화됨!\n");
+		return false;
+	}
+}
+
+int get_distance(Location L1, Location L2) {
+	return sqrt(pow(L2.x, 2) - pow(L1.x, 2) + pow(L2.y, 2) - pow(L1.y, 2));
+}
+
+void send_skill_activation() {
+	sc_packet_skiil_activate packet;
+	packet.type = SC_PACKET_SKIIL_ACTIVATE;
+	packet.ativate = g_Clients[0].skill;
+	for (int i = 0; i < MAX_Player; ++i) {
+		if (g_Clients[i].connect == true) {
+			SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+		}
+	}
+	printf("변경사항 전송함!\n");
 }
