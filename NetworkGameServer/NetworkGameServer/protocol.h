@@ -61,11 +61,12 @@ struct Bullet {
 #define SC_PACKET_BOSS_BULLET 17
 #define SC_PACKET_BOSS_END 18
 #define SC_PACKET_SKIIL_ACTIVATE 19
+#define SC_PACKET_SKILL_BULLET 20
 
 // [클라이언트, 서버] define숫자에서 +1 을 하여 잘못된 패킷을 방지 하기 위하여 작성
 // 패킷을 하나 추가 할 떄마다 아래 값도 증가를 해줘야 한다.
-#define LIMIT_PACKET_CLIENT_NO 10
-#define LIMIT_PACKET_SERVER_NO 20
+#define LIMIT_PACKET_CLIENT_NO 11
+#define LIMIT_PACKET_SERVER_NO 21
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -210,6 +211,12 @@ struct sc_packet_skiil_activate {
 	int type;
 	//-----------------------
 	bool ativate;
+};
+
+struct sc_packet_skill_bullet {
+	int type;
+	//-----------------------
+	Bullet bullet;
 };
 
 #endif

@@ -29,6 +29,8 @@ HANDLE hThread;
 
 Player PLAYER[2];
 skill SKILL;
+std::list<Bullet> skill_bullet;
+CImage skill_bullet_img;
 
 CImage mainimg;
 CImage startButton;
@@ -46,6 +48,8 @@ bool showWarning = false;	// 경고 표시
 bool showBoss = false;	// 보스 표시
 bool playGame = false;	// 두명 이상 들어왔는지 판단 여부
 bool gameEnd = false;
+
+
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
@@ -113,6 +117,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		mainimg.Load("Image\\Map\\main_background.png");
 		startButton.Load("Image\\Map\\STARTBUTTON.png");
 		readyButton.Load("Image\\Map\\READYBUTTON.png");
+		skill_bullet_img.Load("Image\\Player\\skill_bullet.png");
 
 		startButtonRect.left = 460, startButtonRect.top = 550, startButtonRect.bottom = 650, startButtonRect.right = 650;
 
@@ -134,6 +139,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		SetTimer(cpy_hwnd, 8, 10, NULL);	// 플레이어 -> 적 충돌 체크
 
 		SetTimer(cpy_hwnd, 9, 100, NULL);	// 플레이어 스킬 애니메이션 타이머
+		
 
 		SetTimer(cpy_hwnd, 10, 500, NULL);  // 테스트용 타이머
 		break;
@@ -367,6 +373,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 						++b;
 					}
+					for (std::list<Bullet>::iterator b = skill_bullet.begin(); b != skill_bullet.end();)
+					{
+						if (b->draw == false) {
+							++b;
+							continue;
+						}
+						for (int j = 0; j < MONSTER_COUNT; ++j) {
+							if (monster[j].alive == false)
+								continue;
+
+							if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3, false) == true) {
+								// 충돌 처리
+								b->draw = false;
+								monster[j].alive = false;
+							}
+						}
+
+						if (showBoss == true) {
+							if (crash_check(boss.position.x, boss.position.y, b->position.x, b->position.y, 3, true) == true) {
+								// 충돌 처리
+								b->draw = false;
+								boss.hp -= 5;
+							}
+						}
+
+						++b;
+					}
 				}
 			}
 		}
@@ -378,6 +411,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				get_skill_position(PLAYER, SKILL);
 				change_skill_ani(SKILL);
 			}
+
+			if (skill_bullet.size() > 0) {
+				for(int i = 0 ; i <LIMIT_PLAYER; ++i){
+					if (PLAYER[i].connect == true) {
+						for (std::list<Bullet>::iterator it = skill_bullet.begin(); it != skill_bullet.end();) {
+							if (it->position.x >= WndX) {
+								it = skill_bullet.erase(it);
+								continue;
+							}
+							else {
+								//총알 범위 이동
+								it->position.x += 10;
+								it++;
+							}
+						}
+					}
+				}
+			}
+
 		}
 			break;
 
@@ -424,7 +476,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			draw_enemy(mem0dc);
 			draw_enemybullet(mem0dc);	// 총알을 그린다.
 			
-			//SKILL.skill_image.Draw(mem0dc, 0, 0, 200, 200);
+			
 			for (int i = 0; i < LIMIT_PLAYER; ++i) {
 				// 플레이어가 접속 했을 때만 그려 준다.
 				if (PLAYER[i].connect == true) {
@@ -444,7 +496,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 				draw_warning_ui(mem0dc, WndX / 2, WndY / 2);
 			}
 
+		// skill_bullet 그리기
+		if (skill_bullet.size() > 0) {
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				if (PLAYER[i].connect == true) {
+					for (std::list<Bullet>::iterator it = skill_bullet.begin(); it != skill_bullet.end(); ++it) {
+						if(it->draw == true)
+							draw_skill_bullet(mem0dc, it->position.x, it->position.y);
+					}
+				}
+			}
 		}
+
+	}
+
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
@@ -767,6 +832,14 @@ void ProcessPacket(int ci, char *packet) {
 		
 	}
 	break;
+
+	case SC_PACKET_SKILL_BULLET:
+	{
+		sc_packet_skill_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_skill_bullet*>(packet);
+		skill_bullet.emplace_back(my_packet->bullet);
+	}
+	break;
 	}
 
 	InvalidateRect(cpy_hwnd, NULL, false);
@@ -859,4 +932,10 @@ void draw_buttonImage(HDC hdc, CImage& buttonimg, int x, int y) {
 void change_image(CImage& startimg, CImage& readyimg) {
 	// 클릭 시 이미지 변경 함수
 	startimg = readyimg;
+}
+
+void draw_skill_bullet(HDC hdc, int x, int y) {
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	skill_bullet_img.Draw(hdc, x - 25, y - 25, 50, 50);
 }

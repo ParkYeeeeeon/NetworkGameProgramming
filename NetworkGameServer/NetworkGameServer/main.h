@@ -37,6 +37,7 @@ struct CLIENT {
 	bool ready;
 	int bullet_push_time = 0;		// bullet을 너무 빠른 시간안에 추가 하지 않게 만들기 위해
 	bool skill = false;
+	int skill_bullet_push_time = 0;
 };
 
 struct Thread_Parameter {
@@ -88,7 +89,9 @@ void revival_enemy();
 bool crash_check(int myX, int myY, int uX, int uY, int uType, bool isBoss);
 void send_crash_player(int ci);
 void send_crash_monster(int ci);
+
 bool skill_activation();
 int get_distance(Location L1, Location L2);
 void send_skill_activation();
+void add_skill_bullet();
 #endif

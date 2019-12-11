@@ -3,6 +3,7 @@
 
 
 CLIENT g_Clients[MAX_Player];
+std::list<Bullet> skill_bullet;
 
 Enemy monster[MONSTER_COUNT];
 Enemy boss;
@@ -458,6 +459,7 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 						add_bullet_position(i);
 					}
 				}
+
 			}
 
 			// 몬스터, 보스 움직임 처리 [0.1초 마다 처리를 한다.]
@@ -592,6 +594,34 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 
 							++b;
 						}
+						for (std::list<Bullet>::iterator b = skill_bullet.begin(); b != skill_bullet.end();) 
+						{
+							if (b->draw == false) {
+								++b;
+								continue;
+							}
+							for (int j = 0; j < MONSTER_COUNT; ++j) {
+								if (monster[j].alive == false)
+									continue;
+
+								if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3, false) == true) {
+									// 충돌 처리
+									b->draw = false;
+									monster[j].alive = false;
+									send_crash_monster(i);
+								}
+							}
+
+							if (showBoss == true) {
+								if (crash_check(boss.position.x, boss.position.y, b->position.x, b->position.y, 3, true) == true) {
+									// 충돌 처리
+									b->draw = false;
+									boss.hp -= 5;
+								}
+							}
+
+							++b;
+						}
 					}
 				}
 
@@ -615,6 +645,40 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 				}
 				if(Prev != g_Clients[0].skill)
 					send_skill_activation();
+
+				if (g_Clients[0].skill == true) {
+					if (GetTickCount() - g_Clients[0].skill_bullet_push_time >= 400) {
+
+						Location L1, L2, Center;
+						L1 = g_Clients[0].position;
+						L1.x += PLAYER_SIZE / 2;
+						L1.y += PLAYER_SIZE / 2;
+
+						L2 = g_Clients[1].position;
+						L2.x += PLAYER_SIZE / 2;
+						L2.y += PLAYER_SIZE / 2;
+
+						Center.x = (L1.x + L2.x) / 2 + 30;
+						Center.y = (L1.y + L2.y) / 2;
+						
+						// Vector에 넣을 총알 생성
+						Bullet tmp_bullet;
+						tmp_bullet.position = Center;		// 총알의 위치는 현재 플레이어의 위치를 넣어준다.
+						tmp_bullet.type = 5;	// add_player_bullet 에서 type 5라고 적혀 있어서 5라고 넣음
+						tmp_bullet.dir = 0; // 플레이어 객체의 총알 방향은 일자로 나간다면 빈값으로 넣는다.
+						tmp_bullet.bullet_type = 0; // 총알 타입도 없을 경우 빈값으로 넣는다.
+						tmp_bullet.draw = true;		// 화면에 그려줘야 하므로 true
+						skill_bullet.emplace_back(tmp_bullet);	// temp로 만든 bullet를 vector에 넣어준다.
+						g_Clients[0].skill_bullet_push_time = GetTickCount();	// 현재 시간을 넣어줘서 위에서 1초 뒤에 총알을 넣을 수 있게 방지를 한다.
+
+						sc_packet_skill_bullet packet;
+						packet.type = SC_PACKET_SKILL_BULLET;
+						packet.bullet = tmp_bullet;
+						for (int i = 0; i < MAX_Player; ++i) {
+							SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+						}
+					}
+				}
 			}
 
 		}
@@ -1053,7 +1117,7 @@ bool skill_activation() {
 	L2.x += PLAYER_SIZE / 2;
 	L2.y += PLAYER_SIZE / 2;
 
-	if (get_distance(L1, L2) <= 400) {
+	if (get_distance(L1, L2) <= 250) {
 		printf("스킬 활성화됨!\n");
 		return true;
 	}
@@ -1064,7 +1128,7 @@ bool skill_activation() {
 }
 
 int get_distance(Location L1, Location L2) {
-	return sqrt(pow(L2.x, 2) - pow(L1.x, 2) + pow(L2.y, 2) - pow(L1.y, 2));
+	return sqrt((pow(L1.x - L2.x, 2)) + (pow(L1.y - L2.y, 2)));
 }
 
 void send_skill_activation() {

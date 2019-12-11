@@ -73,6 +73,7 @@ void Check_Packet();
 void Send_Packet();
 int get_distance(Location l1, Location l2);
 bool crash_check(int myX, int myY, int uX, int uY, int uType, bool isBoss);
+void draw_skill_bullet(HDC hdc, int x, int y);
 
 void init_sock();
 void err_quit(char *msg);									// 소켓 오류시 에러 출력 해주는 함수

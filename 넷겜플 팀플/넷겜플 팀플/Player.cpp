@@ -16,7 +16,7 @@ void set_player(Player player[2]) {
 	player[1].position.y = 400;
 }
 
-void draw_player(HDC hdc, Player player[2], int ci, skill sk) {
+void draw_player(HDC hdc, Player player[2], int ci, skill& sk) {
 	// 플레이어 그리기
 	SetTextColor(hdc, RGB(0, 0, 255));
 	SetBkMode(hdc, TRANSPARENT);
@@ -31,6 +31,8 @@ void draw_player(HDC hdc, Player player[2], int ci, skill sk) {
 		player[ci].player_up_img.Draw(hdc, player[ci].position.x, player[ci].position.y, 50, 50);
 		break;
 	}
+
+
 
 	if (player[0].skil_activate == true) {
 		draw_skill(hdc, sk, sk.position.x, sk.position.y, sk.ani);
@@ -106,8 +108,8 @@ void change_skill_ani(skill& sk) {
 		sk.ani = 0;
 }
 
-void draw_skill(HDC hdc, skill sk, int x, int y, int ani) {
+void draw_skill(HDC hdc, skill& sk, int x, int y, int ani) {
 	SetTextColor(hdc, RGB(0, 0, 255));
 	SetBkMode(hdc, TRANSPARENT);
-	sk.skill_image.Draw(hdc, sk.position.x, sk.position.y, 50, 50, 0 + (ani * 100), 0, 50, 50);
+	sk.skill_image.Draw(hdc, sk.position.x - 30, sk.position.y - 30, 60, 60, 0 + (ani * 164), 0, 164, 170);
 }
