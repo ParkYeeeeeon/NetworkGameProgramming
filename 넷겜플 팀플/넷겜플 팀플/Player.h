@@ -13,7 +13,7 @@ struct Player {
 	int hp;
 	int bullet_damage;
 	int attack_speed;
-	int bomb;
+	int item;
 	list<Bullet> bullet;
 	bool fire = false;	// ÃÑ¾Ë ½ú´Â°¡ (space¹Ù¸¦ ´­·¶´Â°¡)
 	bool skil_activate;

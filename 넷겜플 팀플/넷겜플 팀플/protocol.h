@@ -40,11 +40,12 @@
 #define SC_PACKET_MONSTER_BULLET 11
 #define SC_PACKET_CRASH_PLAYER_BULLET 12
 #define SC_PACKET_CRASH_MONSTER_BULLET 13
+#define SC_PACLKET_INIT_INFO 14
 
 // [클라이언트, 서버] define숫자에서 +1 을 하여 잘못된 패킷을 방지 하기 위하여 작성
 // 패킷을 하나 추가 할 떄마다 아래 값도 증가를 해줘야 한다.
-#define LIMIT_PACKET_CLIENT_NO 14
-#define LIMIT_PACKET_SERVER_NO 9
+#define LIMIT_PACKET_CLIENT_NO 15
+#define LIMIT_PACKET_SERVER_NO 10
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -173,6 +174,14 @@ struct sc_packet_crash_bullet {
 	//---------------------
 	int ci;  // 어떤 플레이어 혹은 몬스터 인지
 	int hp;	// 플레이어의 경우 hp도 보내줘야 한다. [서버값 우선 처리]
+};
+
+struct sc_packet_init_info {
+	int type;
+	//----------------------
+	int id;
+	int hp;
+	int item;
 };
 
 #endif

@@ -9,11 +9,7 @@ std::list<Bullet> bullet;
 SOCKET listen_sock;
 HANDLE tThread, cThread;
 
-bool playGame = true;	// 두명 이상 들어왔는지 판단 여부
-
-clock_t send_time;
-
-UI ui;
+bool playGame = false;	// 두명 이상 들어왔는지 판단 여부
 
 int main() {
 	init();
@@ -91,7 +87,8 @@ void Accept_Thread() {
 		g_Clients[new_id].cliend_id = new_id;
 		g_Clients[new_id].connect = true;
 		g_Clients[new_id].sock = client_sock;
-		g_Clients[new_id].hp = 10;
+		g_Clients[new_id].hp = 5;
+		g_Clients[new_id].item = 3;
 		g_Clients[new_id].position.x = 0;
 		if (new_id % 2 == 0) {
 			g_Clients[new_id].position.y = 100;
@@ -106,6 +103,7 @@ void Accept_Thread() {
 		packet.no = new_id;
 		SendPacket(client_sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		printf("Client No : %d\n", new_id);
+
 		//------------------------------------------------------------------------------------------
 		// 이미 들어온 유저에게 접속 상태를 알린다.
 		for (int i = 0; i < MAX_Player; ++i) {
@@ -128,6 +126,7 @@ void Accept_Thread() {
 				continue;
 			connect_player(new_id, i, true);
 		}
+
 		//------------------------------------------------------------------------------------------
 		// 클라이언트 몬스터 정보 보내기
 		for (int mi = 0; mi < MONSTER_COUNT; mi++) {
@@ -179,6 +178,7 @@ void DisconnectClient(int ci) {
 }
 
 DWORD WINAPI Work_Thread(void* parameter) {
+	bool init = false;
 	Thread_Parameter* params = (Thread_Parameter*)parameter;
 
 	printf("Thread Client ID : %d\n", params->ci);
@@ -191,6 +191,21 @@ DWORD WINAPI Work_Thread(void* parameter) {
 
 
 	while (1) {
+		//------------------------------------------------------------------------------------------
+		// 캐릭터 정보 보내기
+		if (init == false) {
+			for (int i = 0; i < MAX_Player; ++i) {
+				sc_packet_init_info init_packet;
+				init_packet.type = SC_PACKET_INIT_INFO;
+				init_packet.id = g_Clients[i].cliend_id;
+				init_packet.hp = g_Clients[i].hp;
+				init_packet.item = g_Clients[i].item;
+				SendPacket(client_sock, reinterpret_cast<unsigned char *>(&init_packet), sizeof(init_packet));
+				printf("%d 플레이어 정보 보냄\n", g_Clients[i].cliend_id);
+			}
+			if (playGame == true)
+				init = true;
+		}
 		int len;						// 데이터 크기
 		int retval = recvn(client_sock, (char *)&len, sizeof(int), 0); // 데이터 받기(고정 길이)
 		if (retval == SOCKET_ERROR) {
@@ -217,7 +232,6 @@ DWORD WINAPI Work_Thread(void* parameter) {
 		else {
 			ProcessPacket(params->ci, buf);
 		}
-
 
 	}
 	return 0;
@@ -438,7 +452,7 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 				move_enemybullet();
 			}
 
-			 // 적 -> 플레이어 충돌체크 [ 0.01초마다 처리를 한다. ]
+			// 적 -> 플레이어 충돌체크 [ 0.01초마다 처리를 한다. ]
 			if (GetTickCount() - crashcheck_player_time >= 10) {
 				crashcheck_player_time = GetTickCount();
 				for (int i = 0; i < MAX_Player; ++i) {
@@ -489,12 +503,12 @@ DWORD WINAPI Timer_Thread(void* parameter) {
 						}
 					}
 				}
-				
+
 			}
 
 
 			//
-					   
+
 		}
 		else {
 			//2명이 들어오지 않았을 경우 false 처리 한다.
@@ -668,7 +682,7 @@ void add_enemy_bullet() {
 			SendPacket(g_Clients[i].sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
 		}
 	}
-	
+
 }
 
 void move_enemybullet() {
@@ -739,7 +753,7 @@ void revival_enemy() {
 
 }
 
-bool crash_check( int myX, int myY, int uX, int uY, int uType) {
+bool crash_check(int myX, int myY, int uX, int uY, int uType) {
 	int mRight, mLeft, mBottom, mTop, uRight, uLeft, uBottom, uTop;
 	// 플레이어 사각형 박스 만들기
 	mRight = myX + 50;

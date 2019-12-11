@@ -20,11 +20,9 @@ void init_ui(UI& ui) {
 	ui.bomb_ui_img.Load("Image\\UI\\ITEM_BOMB.png");
 
 	for (int i = 0; i < 2; ++i) {
-		ui.hp[i] = 10;
 		ui.hp_position[i].x = 25;
 		ui.hp_position[i].y = 25 + (i * 550);
 
-		ui.bomb[i] = 3;
 		ui.bomb_position[i].x = 31;
 		ui.bomb_position[i].y = 70 + (i * 550);
 	}

@@ -509,6 +509,17 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 
 void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
+	case SC_PACLKET_INIT_INFO: 
+	{
+		sc_packet_init_info *my_packet;
+		my_packet = reinterpret_cast<sc_packet_init_info*>(packet);
+		PLAYER[my_packet->id].hp = my_packet->hp;
+		PLAYER[my_packet->id].item = my_packet->item;
+		ui.hp[my_packet->id] = my_packet->hp;
+		ui.bomb[my_packet->id] = my_packet->item;
+		printf("%d 플레이어 들어옴\n", my_packet->id);
+	}
+	break;
 	case SC_PACKET_CINO:
 	{
 		sc_packet_cino *my_packet;
@@ -583,6 +594,7 @@ void ProcessPacket(int ci, char *packet) {
 		my_packet = reinterpret_cast<sc_packet_crash_bullet *>(packet);
 		// 플레이어 hp 를 줄인다.
 		PLAYER[my_packet->ci].hp = my_packet->hp;
+		ui.hp[my_packet->ci] = my_packet->hp;
 	}
 	break;
 
