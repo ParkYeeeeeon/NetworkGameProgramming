@@ -28,6 +28,10 @@ HANDLE hThread;
 Player PLAYER[2];
 UI ui;
 CImage mapimg;
+CImage mainimg;
+CImage startButton;
+CImage readyButton;
+static RECT startButtonRect;
 CImage num_image[11]; // 숫자 이미지
 int client_no = -1;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
@@ -100,7 +104,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		set_player(PLAYER);
 		set_number();
 		mapimg.Load("Image\\Map\\Background.png");
+		mainimg.Load("Image\\Map\\main_background.png");
+		startButton.Load("Image\\Map\\STARTBUTTON.png");
+		readyButton.Load("Image\\Map\\READYBUTTON.png");
 
+		startButtonRect.left = 460, startButtonRect.top = 550, startButtonRect.bottom = 650, startButtonRect.right = 650;
 
 		init_Monster_Image();
 		init_ui(ui);
@@ -127,6 +135,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 
 
 	case WM_LBUTTONDOWN:
+		static int mx, my;
+		mx = LOWORD(lParam);
+		my = HIWORD(lParam);
+
+		if (playGame == false) {
+			if (mx >= startButtonRect.left && mx <= startButtonRect.right && my >= startButtonRect.top && my <= startButtonRect.bottom) {
+				//Start 버튼을 클릭
+				//Ready 버튼으로 변경
+				change_image(startButton,readyButton);
+			}
+		}
 		break;
 
 	case WM_KEYDOWN:
@@ -324,28 +343,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		PatBlt(mem0dc, rt.left, rt.top, rt.right, rt.bottom, BLACKNESS);
 		hbmMemOld = (HBITMAP)SelectObject(mem0dc, hbmMem);//4
 
+		if (playGame == false)
+		{
+			draw_mainImage(mem0dc, mainimg);
+			draw_buttonImage(mem0dc, startButton,460,550);
+			//영역체크용 사각형
+			//Rectangle(mem0dc, startButtonRect.left, startButtonRect.top, startButtonRect.right, startButtonRect.bottom);
+		}
+
 		//Monster_Draw(mem0dc, 199, 579, 0, 100);
-		draw_map(mem0dc, mapimg);
+		
 
 		// 플레이어가 모두 들어 왔을 경우에만 몬스터를 그려준다.
 		if (playGame == true) {
+			draw_playerbullet(mem0dc, PLAYER);
+			draw_bullet_status(mem0dc);
+			draw_ui(mem0dc, ui);
+			draw_map(mem0dc, mapimg);
 			draw_enemy(mem0dc);
 			draw_enemybullet(mem0dc);	// 총알을 그린다.
-		}
-		for (int i = 0; i < LIMIT_PLAYER; ++i) {
-			// 플레이어가 접속 했을 때만 그려 준다.
-			if (PLAYER[i].connect == true) {
-				// 충돌체크 사각형
-				//Rectangle(mem0dc, PLAYER[i].position.x, PLAYER[i].position.y, PLAYER[i].position.x + 50, PLAYER[i].position.y + 50);
-				draw_player(mem0dc, PLAYER, i);
+			draw_Timer(mem0dc, total_timer);
+
+			for (int i = 0; i < LIMIT_PLAYER; ++i) {
+				// 플레이어가 접속 했을 때만 그려 준다.
+				if (PLAYER[i].connect == true) {
+					// 충돌체크 사각형
+					//Rectangle(mem0dc, PLAYER[i].position.x, PLAYER[i].position.y, PLAYER[i].position.x + 50, PLAYER[i].position.y + 50);
+					draw_player(mem0dc, PLAYER, i);
+				}
 			}
 		}
-		draw_playerbullet(mem0dc, PLAYER);
-		draw_bullet_status(mem0dc);
-		draw_ui(mem0dc, ui);
+		
+		
+		
 
 
-		draw_Timer(mem0dc, total_timer);
+
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
@@ -678,4 +711,26 @@ void reconnect_socket(SOCKET &sock) {
 
 	// 소켓을 다시 연결 한다.
 	init_sock();
+}
+
+void draw_mainImage(HDC hdc, CImage& mainimg) {
+	// main 화면 그리기
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	mainimg.Draw(hdc, 0, 0, 1080, 720);
+
+}
+
+void draw_buttonImage(HDC hdc, CImage& buttonimg,int x,int y) {
+	// button 그리기
+	SetTextColor(hdc, RGB(0, 0, 255));
+	SetBkMode(hdc, TRANSPARENT);
+	buttonimg.Draw(hdc, x, y, 200, 100);
+
+}
+
+void change_image( CImage& startimg,CImage& readyimg) {
+	// 클릭 시 이미지 변경 함수
+	startimg = readyimg;
+
 }

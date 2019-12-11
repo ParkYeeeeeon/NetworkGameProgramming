@@ -63,6 +63,9 @@ void draw_ui(HDC hdc, UI& ui);
 void draw_map(HDC hdc, CImage& mapimg);
 void draw_Timer(HDC hdc, int time);
 void draw_number(HDC hdc, int num, int x, int y);
+void draw_mainImage(HDC hdc, CImage& mapimg);
+void draw_buttonImage(HDC hdc, CImage& buttonimg,int x,int y);
+void change_image(CImage& startimg, CImage& readyimg); //버튼 클릭 시 이미지 변경
 void set_number();
 void Connect();
 void Recv_Packet();
