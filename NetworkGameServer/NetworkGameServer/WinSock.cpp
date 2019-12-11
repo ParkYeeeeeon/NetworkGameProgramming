@@ -61,7 +61,7 @@ void SendPacket(SOCKET sock, void *packet, int packet_size) {
 	memcpy(buf, packet, packet_size);
 	//buf[packet_size] = '\0';
 
-	if ((int)buf[0] >= 15) {
+	if ((int)buf[0] >= LIMIT_PACKET_SERVER_NO) {
 		printf("패킷 전송 이상 오류..!\n");
 	}
 	else {
@@ -93,7 +93,7 @@ void SendPacketQueue() {
 
 
 		// Type이 정상적으로 들어가는지 확인 하기 위하여 
-		if ((int)pq.buf[0] >= 12 || !(pq.packet_size >= 1 && pq.packet_size<=5000)) {
+		if ((int)pq.buf[0] >= LIMIT_PACKET_SERVER_NO || !(pq.packet_size >= 1 && pq.packet_size<=5000)) {
 			printf("패킷 전송 이상 오류..!\n");
 		}
 		//else {

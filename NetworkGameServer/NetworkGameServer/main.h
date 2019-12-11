@@ -34,6 +34,7 @@ struct CLIENT {
 	bool Attack = false;
 	int item;
 	std::list<Bullet> bullet;
+	bool ready;
 	int bullet_push_time = 0;		// bullet을 너무 빠른 시간안에 추가 하지 않게 만들기 위해
 };
 
@@ -72,14 +73,18 @@ void add_player_bullet(CLIENT player[2]);
 void add_bullet_position(int ci);
 
 void init_monster();
+void init_boss();
 void move_monster_location();
+void move_boss_location();
 void send_monster_location(int ci);
+void send_boss_location(int ci);
 void add_enemy_bullet();
+void add_boss_bullet(int time);
 void move_monster_location();
 void move_enemybullet();
 void change_enemy_bullet(std::list<Bullet>::iterator i);
 void revival_enemy();
-bool crash_check(int myX, int myY, int uX, int uY, int uType);
+bool crash_check(int myX, int myY, int uX, int uY, int uType, bool isBoss);
 void send_crash_player(int ci);
 void send_crash_monster(int ci);
 #endif

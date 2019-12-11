@@ -32,5 +32,4 @@ void change_enemy_location(int monsterkind, int monster_id);
 void change_enemy_bullet(std::list<Bullet>::iterator i );
 void add_enemy_bullet();
 void draw_bullet_status(HDC mem0dc);
-void revival_enemy();
 void move_enemybullet();

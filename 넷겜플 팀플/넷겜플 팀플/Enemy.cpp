@@ -12,39 +12,6 @@ void init_Monster_Image() {
 	srand((unsigned int)time(NULL));
 }
 
-void revival_enemy() {
-	//// 몬스터가 죽었을 경우 랜덤한 위치에 다시 생성 시킨다.
-	//for (int i = 0; i < MONSTER_COUNT; i++)
-	//{
-	//	if (mon1[i].alive == false) {
-	//		mon1[i].position.x = rand()%300 + display_end_x;
-	//		mon1[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-	//		//if (mon1[i].position.x < display_end_x)
-	//		{
-	//			mon1[i].alive = true;
-	//		}
-	//	}
-
-	//	if (mon2[i].alive == false) {
-	//		mon2[i].position.x = rand() % 300 + display_end_x;
-	//		mon2[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-	//		//if (mon2[i].position.x < display_end_x)
-	//		{
-	//			mon2[i].alive = true;
-	//		}
-	//	}
-
-	//	if (mon3[i].alive == false) {
-	//		mon3[i].position.x = rand() % 300 + display_end_x;
-	//		mon3[i].position.y = rand() % (display_end_y - display_start_y) + display_start_y;
-	//		//if (mon3[i].position.x < display_end_x)
-	//		{
-	//			mon3[i].alive = true;
-	//		}
-	//	}
-	//}
-}
-
 void add_enemy_bullet() {
 	for (int mi = 0; mi < MONSTER_COUNT; mi++) {
 		// 몬스터가 살아 있을 경우에만 처리 한다.

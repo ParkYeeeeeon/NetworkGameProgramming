@@ -28,6 +28,7 @@ struct Bullet {
 #define CS_PACKET_DIR 5
 #define CS_PACKET_ATTACK 6
 #define CS_PACKET_RECONNECT 7
+#define CS_PACKET_READY 8
 
 #define VK_UP_UP 100
 #define VK_DOWN_UP 101
@@ -54,12 +55,16 @@ struct Bullet {
 #define SC_PACKET_MONSTER_BULLET 11;
 #define SC_PACKET_CRASH_PLAYER_BULLET 12
 #define SC_PACKET_CRASH_MONSTER_BULLET 13
-#define SC_PACKET_INIT_INFO 14
+#define SC_PACLKET_WARNING_START 14
+#define SC_PACLKET_BOSS_START 15
+#define SC_PACKET_BOSS_LOCATION 16
+#define SC_PACKET_BOSS_BULLET 17
+#define SC_PACKET_BOSS_END 18
 
 // [클라이언트, 서버] define숫자에서 +1 을 하여 잘못된 패킷을 방지 하기 위하여 작성
 // 패킷을 하나 추가 할 떄마다 아래 값도 증가를 해줘야 한다.
-#define LIMIT_PACKET_CLIENT_NO 15
-#define LIMIT_PACKET_SERVER_NO 10
+#define LIMIT_PACKET_CLIENT_NO 9
+#define LIMIT_PACKET_SERVER_NO 19
 
 // 패킷 구조체 정보
 struct cs_packet_dir {
@@ -128,6 +133,9 @@ struct sc_packet_connect {
 	int no;
 	bool connect;
 	int hp;
+	int item;
+	bool ready;
+	Location position;
 };
 
 struct sc_packet_location {
@@ -167,7 +175,7 @@ struct sc_packet_bullet {
 struct sc_packet_monster_bullet {
 	int type;
 	//----------------
-	bool shoot;
+	int shoot;
 };
 
 struct sc_packet_monster_location {

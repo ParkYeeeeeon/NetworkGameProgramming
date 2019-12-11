@@ -6,7 +6,10 @@
 #define PLAYER_SIZE 50
 #define PLAYER_BULLET_SIZE 20
 
-#define MONSTER_COUNT 5
+#define MONSTER_COUNT 10
+
+#define BOSS_COUNT 60	// 보스가 출연까지 대기 시간 초 단위
+#define SHOW_WARNING_COUNT 5	// WARNING 카운팅
 
 #define MONSTER_SIZE_X 20   
 #define MONSTER_SIZE_Y 16

@@ -17,6 +17,7 @@ struct Player {
 	list<Bullet> bullet;
 	bool fire = false;	// ÃÑ¾Ë ½ú´Â°¡ (space¹Ù¸¦ ´­·¶´Â°¡)
 	bool skil_activate;
+	bool ready = false;
 	CImage player_img;
 	CImage player_up_img;
 	CImage player_down_img;

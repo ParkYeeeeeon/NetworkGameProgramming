@@ -7,6 +7,7 @@
 #include <math.h>
 #include <mmsystem.h>
 #include "Utill.h"
+#include "Boss.h"
 #include "Enemy.h"
 #include "Player.h"
 #include "GameState.h"
@@ -21,24 +22,28 @@ using namespace std;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = "ApiBase";
+HWND cpy_hwnd;
 
 SOCKET sock;
 HANDLE hThread;
 
 Player PLAYER[2];
-UI ui;
-CImage mapimg;
 CImage mainimg;
 CImage startButton;
 CImage readyButton;
 static RECT startButtonRect;
+UI ui;
+CImage mapimg;
 CImage num_image[11]; // 숫자 이미지
 int client_no = -1;	// 클라이언트 고유 번호 [서버에서 내려주는 고유 번호]
 BOOL KeyBuffer[256]{ 0 };
 int num; // 숫자 표시를 위한 배열
 
 int total_timer = 0;
+bool showWarning = false;	// 경고 표시
+bool showBoss = false;	// 보스 표시
 bool playGame = false;	// 두명 이상 들어왔는지 판단 여부
+bool gameEnd = false;
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
@@ -89,7 +94,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 {
 	PAINTSTRUCT ps;
 	HDC hdc, mem0dc;
-	HWND cpy_hwnd;
 	static HBITMAP hbmOld, hbmMem, hbmMemOld;			// 더블버퍼링을 위하여!
 	static RECT rt;
 
@@ -111,6 +115,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		startButtonRect.left = 460, startButtonRect.top = 550, startButtonRect.bottom = 650, startButtonRect.right = 650;
 
 		init_Monster_Image();
+		init_Boss_Image();
 		init_ui(ui);
 		init_Monster_Bullet_Image();	// 이미지를 초기화 시킨다.
 
@@ -143,7 +148,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 			if (mx >= startButtonRect.left && mx <= startButtonRect.right && my >= startButtonRect.top && my <= startButtonRect.bottom) {
 				//Start 버튼을 클릭
 				//Ready 버튼으로 변경
-				change_image(startButton,readyButton);
+				change_image(startButton, readyButton);
+
+				// Ready를 서버에 전송한다.
+				cs_packet_dir packet;
+				packet.type = CS_PACKET_READY;
+				SendPacket(sock, reinterpret_cast<unsigned char *>(&packet), sizeof(packet));
+
 			}
 		}
 		break;
@@ -180,26 +191,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					change_enemy_location(monster[i].kind, i);
 				}
 			}
+			if (showBoss == true) {
+				change_boss_location();
+			}
 			break;
 
 		case 3:
 			// 총알 움직임 처리
 			move_enemybullet();
+			if (showBoss == true) {
+				move_bossbullet();
+			}
 			break;
 
 		case 4:
 		{
 			//--------------------------------------------------------------------------
 			// 모든 플레이어가 들어왔는지 확인 처리
-			int new_id = -1;
+			int new_id = 0;
 			for (int i = 0; i < LIMIT_PLAYER; ++i) {
-				if (PLAYER[i].connect == false) {
-					new_id = i;
-					break;
+				if (PLAYER[i].connect == true && PLAYER[i].ready == true) {
+					new_id++;
 				}
 			}
 
-			if (-1 == new_id) {
+			if (new_id == LIMIT_PLAYER) {
 				playGame = true;
 			}
 			else {
@@ -220,11 +236,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 							continue;
 						}
 
-						if (crash_check(PLAYER[i].position.x, PLAYER[i].position.y, b->position.x, b->position.y, b->bullet_type) == true) {
+						if (crash_check(PLAYER[i].position.x, PLAYER[i].position.y, b->position.x, b->position.y, b->bullet_type, false) == true) {
 							// 충돌 처리
 							b->draw = false;
 						}
 						++b;
+					}
+					if (showBoss == true) {
+						for (list<Bullet>::iterator b = bossBullet.begin(); b != bossBullet.end();)
+						{
+							// 총알이 안그려지는 경우 넘긴다. [충돌체크 불필요]
+							if (b->draw == false) {
+								++b;
+								continue;
+							}
+
+							if (crash_check(PLAYER[i].position.x, PLAYER[i].position.y, b->position.x, b->position.y, b->bullet_type, false) == true) {
+								// 충돌 처리
+								b->draw = false;
+							}
+							++b;
+						}
 					}
 				}
 			}
@@ -313,12 +345,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 							if (monster[j].alive == false)
 								continue;
 
-							if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3) == true) {
+							if (crash_check(monster[j].position.x, monster[j].position.y, b->position.x, b->position.y, 3, false) == true) {
 								// 충돌 처리
 								b->draw = false;
 								monster[j].alive = false;
 							}
 						}
+
+						if (showBoss == true) {
+							if (crash_check(boss.position.x, boss.position.y, b->position.x, b->position.y, 3, true) == true) {
+								// 충돌 처리
+								b->draw = false;
+								boss.hp -= 1;
+							}
+						}
+
 						++b;
 					}
 				}
@@ -343,26 +384,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 		PatBlt(mem0dc, rt.left, rt.top, rt.right, rt.bottom, BLACKNESS);
 		hbmMemOld = (HBITMAP)SelectObject(mem0dc, hbmMem);//4
 
-		if (playGame == false)
+		if (gameEnd == true) {
+
+		}
+
+		if (playGame == false && gameEnd == false)
 		{
 			draw_mainImage(mem0dc, mainimg);
-			draw_buttonImage(mem0dc, startButton,460,550);
+			draw_buttonImage(mem0dc, startButton, 460, 550);
 			//영역체크용 사각형
 			//Rectangle(mem0dc, startButtonRect.left, startButtonRect.top, startButtonRect.right, startButtonRect.bottom);
 		}
 
-		//Monster_Draw(mem0dc, 199, 579, 0, 100);
-		
-
 		// 플레이어가 모두 들어 왔을 경우에만 몬스터를 그려준다.
-		if (playGame == true) {
+		if (playGame == true && gameEnd == false) {
+			draw_map(mem0dc, mapimg);
+			draw_ui(mem0dc, ui);
+			draw_Timer(mem0dc, total_timer);
+
 			draw_playerbullet(mem0dc, PLAYER);
 			draw_bullet_status(mem0dc);
-			draw_ui(mem0dc, ui);
-			draw_map(mem0dc, mapimg);
+			
 			draw_enemy(mem0dc);
 			draw_enemybullet(mem0dc);	// 총알을 그린다.
-			draw_Timer(mem0dc, total_timer);
+
+			
 
 			for (int i = 0; i < LIMIT_PLAYER; ++i) {
 				// 플레이어가 접속 했을 때만 그려 준다.
@@ -372,13 +418,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 					draw_player(mem0dc, PLAYER, i);
 				}
 			}
+
+			// 보스 그려주기
+			if (showBoss == true) {
+				draw_boss(mem0dc, boss.position.x, boss.position.y, boss.hp);
+				draw_bossbullet(mem0dc);
+			}
+			// 보스 나오기전 Warning 표시 %2의 경우 번쩍번쩍 하게 그렸다 안그렸다 처리
+			if (total_timer % 2 == 0 && showWarning == true) {
+				draw_warning_ui(mem0dc, WndX / 2, WndY / 2);
+			}
+
 		}
-		
-		
-		
-
-
-
 
 		BitBlt(hdc, 0, 0, rt.right, rt.bottom, mem0dc, 0, 0, SRCCOPY);
 
@@ -399,13 +450,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMessage, WPARAM
 }
 
 
-bool crash_check(int myX, int myY, int uX, int uY, int uType) {
+bool crash_check(int myX, int myY, int uX, int uY, int uType, bool isBoss) {
 	// 플레이어 0번만 충돌체크 처리 테스트
 	int mRight, mLeft, mBottom, mTop, uRight, uLeft, uBottom, uTop;
-	mRight = myX + 50;
-	mLeft = myX;
-	mBottom = myY + 50;
-	mTop = myY;
+	if (isBoss == false) {
+		mRight = myX + 50;
+		mLeft = myX;
+		mBottom = myY + 50;
+		mTop = myY;
+	}
+	else {
+		mRight = myX + 452;
+		mLeft = myX;
+		mBottom = myY + 320;
+		mTop = myY;
+	}
 
 	switch (uType) {
 	case 0:
@@ -505,7 +564,7 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 		}
 		buf[retval] = '\0';
 
-		if ((int)buf[0] >= LIMIT_PACKET_CLIENT_NO || (int)buf[0] <= 0) {
+		if ((int)buf[0] >= LIMIT_PACKET_SERVER_NO || (int)buf[0] <= 0) {
 
 			// 패킷이 정상적으로 들어오지 못할 경우 서버와 Reconnect 처리를 한다.
 			reconnect_socket(client_sock);
@@ -542,17 +601,6 @@ DWORD WINAPI Read_Thread(LPVOID arg) {
 
 void ProcessPacket(int ci, char *packet) {
 	switch (packet[0]) {
-	case SC_PACLKET_INIT_INFO: 
-	{
-		sc_packet_init_info *my_packet;
-		my_packet = reinterpret_cast<sc_packet_init_info*>(packet);
-		PLAYER[my_packet->id].hp = my_packet->hp;
-		PLAYER[my_packet->id].item = my_packet->item;
-		ui.hp[my_packet->id] = my_packet->hp;
-		ui.bomb[my_packet->id] = my_packet->item;
-		printf("%d 플레이어 들어옴\n", my_packet->id);
-	}
-	break;
 	case SC_PACKET_CINO:
 	{
 		sc_packet_cino *my_packet;
@@ -579,6 +627,16 @@ void ProcessPacket(int ci, char *packet) {
 		my_packet = reinterpret_cast<sc_packet_connect *>(packet);
 		PLAYER[my_packet->no].connect = my_packet->connect;
 		PLAYER[my_packet->no].hp = my_packet->hp;
+		PLAYER[my_packet->no].item = my_packet->item;
+		PLAYER[my_packet->no].ready = my_packet->ready;
+		ui.hp[my_packet->no] = my_packet->hp;
+		ui.bomb[my_packet->no] = my_packet->item;
+		// 자신이 아닌 다른사람의 정보를 받을 경우 위치 동기화 시켜준다.
+		if (client_no != my_packet->no) {
+			PLAYER[my_packet->no].position.x = my_packet->position.x;
+			PLAYER[my_packet->no].position.y = my_packet->position.y;
+		}
+
 	}
 	break;
 
@@ -587,7 +645,25 @@ void ProcessPacket(int ci, char *packet) {
 		sc_packet_time *my_packet;
 		my_packet = reinterpret_cast<sc_packet_time *>(packet);
 		total_timer = my_packet->progress_time;
-		//printf("%d초 경과\t", my_packet->progress_time);
+	}
+	break;
+
+	case SC_PACLKET_WARNING_START:
+	{
+		sc_packet_time *my_packet;
+		my_packet = reinterpret_cast<sc_packet_time *>(packet);
+		total_timer = my_packet->progress_time;
+		showWarning = true;
+	}
+	break;
+
+	case SC_PACLKET_BOSS_START:
+	{
+		sc_packet_time *my_packet;
+		my_packet = reinterpret_cast<sc_packet_time *>(packet);
+		total_timer = my_packet->progress_time;
+		showWarning = false;
+		showBoss = true;
 	}
 	break;
 
@@ -604,20 +680,40 @@ void ProcessPacket(int ci, char *packet) {
 	{
 		sc_packet_monster_location *my_packet;
 		my_packet = reinterpret_cast<sc_packet_monster_location *>(packet);
-
 		monster[my_packet->no].alive = my_packet->alive;
 		monster[my_packet->no].ani = my_packet->ani;
 		monster[my_packet->no].hp = my_packet->hp;
 		monster[my_packet->no].kind = my_packet->kind;
 		monster[my_packet->no].level = my_packet->level;
 		monster[my_packet->no].position = my_packet->position;
+	}
+	break;
 
+	case SC_PACKET_BOSS_LOCATION:
+	{
+		sc_packet_monster_location *my_packet;
+		my_packet = reinterpret_cast<sc_packet_monster_location *>(packet);
+		boss.alive = my_packet->alive;
+		boss.ani = my_packet->ani;
+		boss.hp = my_packet->hp;
+		boss.kind = my_packet->kind;
+		boss.level = my_packet->level;
+		boss.position = my_packet->position;
 	}
 	break;
 
 	case SC_PACKET_MONSTER_BULLET:
 	{
 		add_enemy_bullet();
+	}
+	break;
+
+	case SC_PACKET_BOSS_BULLET:
+	{
+		sc_packet_monster_bullet *my_packet;
+		my_packet = reinterpret_cast<sc_packet_monster_bullet *>(packet);
+		boss.kind = my_packet->shoot;
+		add_boss_bullet();
 	}
 	break;
 
@@ -640,7 +736,15 @@ void ProcessPacket(int ci, char *packet) {
 	}
 	break;
 
+	case SC_PACKET_BOSS_END:
+	{
+		gameEnd = true;
 	}
+	break;
+
+	}
+
+	InvalidateRect(cpy_hwnd, NULL, false);
 }
 
 void set_number() {
@@ -718,19 +822,16 @@ void draw_mainImage(HDC hdc, CImage& mainimg) {
 	SetTextColor(hdc, RGB(0, 0, 255));
 	SetBkMode(hdc, TRANSPARENT);
 	mainimg.Draw(hdc, 0, 0, 1080, 720);
-
 }
 
-void draw_buttonImage(HDC hdc, CImage& buttonimg,int x,int y) {
+void draw_buttonImage(HDC hdc, CImage& buttonimg, int x, int y) {
 	// button 그리기
 	SetTextColor(hdc, RGB(0, 0, 255));
 	SetBkMode(hdc, TRANSPARENT);
 	buttonimg.Draw(hdc, x, y, 200, 100);
-
 }
 
-void change_image( CImage& startimg,CImage& readyimg) {
+void change_image(CImage& startimg, CImage& readyimg) {
 	// 클릭 시 이미지 변경 함수
 	startimg = readyimg;
-
 }
