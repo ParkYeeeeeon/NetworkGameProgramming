@@ -3,7 +3,7 @@
 
 #include "Utill.h"
 
-#define SERVERIP "127.0.0.1"
+#define SERVERIP "10.30.1.11"
 #define SERVERPORT 9000
 
 // 클라 -> 서버
